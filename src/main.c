@@ -6,14 +6,14 @@ int main(void)
 {
     Game_state state;
 
-    Letter_piece board_string[] = "rnbqkbnr"
-                                  "pppppppp"
-                                  "********"
-                                  "********"
-                                  "********"
-                                  "********"
-                                  "PPPPPPPP"
-                                  "RNBQKBNR";
+    Letter_piece board_string[] = "........"
+                                  "....r..."
+                                  "........"
+                                  "........"
+                                  "..P.R..."
+                                  "........"
+                                  "........"
+                                  ".K......";
 
     board_from_string(&state, board_string);
 

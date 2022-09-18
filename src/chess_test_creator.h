@@ -6,7 +6,7 @@
 typedef char Letter_piece;
 enum letter_piece
 {
-    LET_EMPTY = '*',
+    LET_EMPTY = '.',
     LET_WHITE_PAWN = 'P',
     LET_WHITE_KNIGHT = 'N',
     LET_WHITE_BISHOP = 'B',
@@ -29,10 +29,10 @@ enum letter_piece
  *                    format:                                       *
  *                    Letter_piece board_string[] = "rnbqkbnr"      *
  *                                                  "pppppppp"      *
- *                                                  "********"      *
- *                                                  "********"      *
- *                                                  "********"      *
- *                                                  "********"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
  *                                                  "PPPPPPPP"      *
  *                                                  "RNBQKBNR";     *
  *                    Here uppper case letters represent black      *

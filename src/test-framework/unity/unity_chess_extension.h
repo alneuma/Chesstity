@@ -10,6 +10,6 @@ void UnityAssertEqualStringChess(const char* expected,
                                  const char* msg,
                                  const UNITY_LINE_TYPE lineNumber);
 
-void UnityPrintExpectedAndActualStringsChess(const char* expected, const char* actual)
+void UnityPrintExpectedAndActualStringsChess(const char* expected, const char* actual);
 
 #endif

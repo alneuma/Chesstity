@@ -1,6 +1,7 @@
 #include "core_functions.h"
 #include "chess_test_creator.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 /********************************************************************
  * board_from_string: Writes the board_state represented by         *
@@ -9,10 +10,10 @@
  *                    format:                                       *
  *                    Letter_piece board_string[] = "rnbqkbnr"      *
  *                                                  "pppppppp"      *
- *                                                  "********"      *
- *                                                  "********"      *
- *                                                  "********"      *
- *                                                  "********"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
+ *                                                  "........"      *
  *                                                  "PPPPPPPP"      *
  *                                                  "RNBQKBNR";     *
  *                    Here uppper case letters represent black      *
@@ -72,21 +73,26 @@ Piece letter_to_piece(Letter_piece letter)
  ********************************************************************/
 char *possible_moves_string(Game_state *state, Square square)
 {
-    static char moves_string[] = "00000000"
-                                 "00000000"
-                                 "00000000"
-                                 "00000000"
-                                 "00000000"
-                                 "00000000"
-                                 "00000000"
-                                 "00000000";
-    
+    static char moves_string[] = "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........";
+
+    for (char *p = moves_string; *p; ++p)
+        *p = '.';
+
+    moves_string[(BOARD_ROWS-1 - square.row) * 8 + square.column] = '0';
     char *write = moves_string;
-    for (int i = 0; i < BOARD_ROWS; ++i)
+    int i, j;
+    for (i = BOARD_ROWS-1; i >= 0; --i)
     {
-        for (int j = 0; j < BOARD_COLUMNS; ++j)
+        for (j = 0; j < BOARD_COLUMNS; ++j)
         {
-            if (state->possible_moves[square.row][square.column][i][j])
+            if (true == state->possible_moves[square.row][square.column][i][j])
             {
                 *write = '1';
             }
@@ -94,7 +100,7 @@ char *possible_moves_string(Game_state *state, Square square)
         }
     }
 
-    return &moves_string;
+    return moves_string;
 }
 
 
@@ -148,5 +154,3 @@ void set_game_state(Game_state *state)
 
 //    struct game_state *previous_game_state;
 }
-
-
