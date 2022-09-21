@@ -31,7 +31,7 @@ test_chess.o: test_chess.c chess_test_creator.h core_functions.h test-framework/
 unity.o: test-framework/unity/unity.c test-framework/unity/unity.h test-framework/unity/unity_internals.h test-framework/unity/unity_chess_extension.h
 	cc $(CFLAGS) -c test-framework/unity/unity.c -o unity.o $(LIBS)
 
-chess_test_creator.o: chess_test_creator.c chess_test_creator.h core_functions.h
+chess_test_creator.o: chess_test_creator.c chess_test_creator.h core_functions.h graphic_output.h
 	cc $(CFLAGS) -c chess_test_creator.c -o chess_test_creator.o $(LIBS) 
 
 tests.out: $(objects_test)

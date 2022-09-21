@@ -32,12 +32,13 @@ typedef struct move {
 
 typedef struct game_state {
     int move_number;
-    int uneventful_moves_number;
-    int repeated_boards_number;
-    bool rochade_small_legal_white;
-    bool rochade_big_legal_white;
-    bool rochade_small_legal_black;
-    bool rochade_big_legal_black;
+    int uneventful_moves;
+    int board_occurences;
+    bool castle_kngsde_legal_white;
+    bool castle_qensde_legal_white;
+    bool castle_kngsde_legal_black;
+    bool castle_qensde_legal_black;
+    bool pawn_upgradable;
     Move last_move;
     Piece board[BOARD_ROWS][BOARD_COLUMNS];
     Square king_white;
@@ -48,9 +49,39 @@ typedef struct game_state {
 } Game_state;
 
 /********************************************************************
- * active_player: Returns the color of the active player.           *
+ * compare_boards: Compares two boards are the same, i.e. if the    *
+ *                 same pieces occupy the same positions.           *
+ *                 Other possible Game_state qualities are not      *
+ *                 checked.                                         *
  ********************************************************************/
-Color players_turn(Game_state *game_state);
+bool compare_boards(Piece board_1[BOARD_ROWS][BOARD_COLUMNS], Piece board_2[BOARD_ROWS][BOARD_COLUMNS]);
+
+/********************************************************************
+ * board_repeated: Counts the number of times the actual board-     *
+ *                 state occured before in the game.                *
+ *                 Is necessary to determine if draw can be         *
+ *                 claimed.                                         *
+ ********************************************************************/
+int board_repeated(Game_state *state);
+
+/********************************************************************
+ * apply_move: Returns a pointer to a dynamically allocated         *
+ *             Game_state which represents the state of the game    *
+ *             after move was performed in state.                   *
+ *             Returns NULL if memoryallocation fails.              *
+ *             Assumes that move is legal.                          *
+ ********************************************************************/
+Game_state *apply_move(Game_state *state, Move move);
+
+/********************************************************************
+ * player_active: Returns the color of the active player.           *
+ ********************************************************************/
+Color player_active(Game_state *state);
+
+/********************************************************************
+ * player_passive: Returns the color of the active player.          *
+ ********************************************************************/
+Color player_passive(Game_state *state);
 
 /********************************************************************
  * king_square: Returns a pointer to the square of players's king   *
@@ -59,9 +90,9 @@ Color players_turn(Game_state *game_state);
 Square *king_square(Game_state *game_state, Color player);
 
 /********************************************************************
- * update_possible_moves: Looks at certain parameters of a          *
- *                        Game_state structure and writes it's      *
- *                        possible moves.                           *
+ * update_possible_moves_game: Looks at certain parameters of a     *
+ *                             Game_state structure and writes it's *
+ *                             possible moves.                      *
  ********************************************************************/
 void update_possible_moves_game(Game_state *game_state);
 
@@ -121,12 +152,13 @@ void write_king_possible_moves(Game_state *state, Square *square);
 bool in_check_after_move(Game_state *state, Move move);
 
 /********************************************************************
- * is_attacked: To see if rochade is possible, it is necessary to   *
- *           check if unoccupied squares are attacked by a specific *
- *           player. Thats why the color of the defending player    *
- *           needs to be specified. This also could prove useful    *
- *           for the AI to plan moves.                              *
+ * is_attacked_by: To see if rochade is possible, it is necessary   *
+ *                 to check if unoccupied squares are attacked by a *
+ *                 specific player. Thats why the color of the      *
+ *                 defending player needs to be specified. This     *
+ *                 also could prove useful for the AI to plan       *
+ *                 moves.                                           *
  ********************************************************************/
-bool is_attacked(Game_state *game_state, Square square, Color attacking_player);
+bool is_attacked_by(Game_state *game_state, Square square, Color attacking_player);
 
 #endif

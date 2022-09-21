@@ -1,5 +1,6 @@
 #include "core_functions.h"
 #include "chess_test_creator.h"
+#include "graphic_output.h"
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -103,6 +104,41 @@ char *possible_moves_string(Game_state *state, Square square)
     return moves_string;
 }
 
+/********************************************************************
+ * board_string: Retruns a pointer to a string displaying the       *
+ *               current board state in the same format, the        *
+ *               board_from_string() function takes as input.       *
+ ********************************************************************/
+char *board_string(Game_state *state)
+{
+    static char board_string[] = "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........"
+                                 "........";
+
+    for (char *p = board_string; *p; ++p)
+        *p = '.';
+
+    char *write = board_string;
+    int i, j;
+    for (i = BOARD_ROWS-1; i >= 0; --i)
+    {
+        for (j = 0; j < BOARD_COLUMNS; ++j)
+        {
+            if (EMPTY == state->board[i][j].kind)
+                *write = '.';
+            else
+                *write = piece_to_letter(&state->board[i][j]);
+            ++write;
+        }
+    }
+
+    return board_string;
+}
 
 /********************************************************************
  * set_game_state: Takes a Game_state and sets it's values to       *
@@ -113,13 +149,14 @@ char *possible_moves_string(Game_state *state, Square square)
 void set_game_state(Game_state *state)
 {
     state->move_number = 1;
-    state->uneventful_moves_number = 0;
-    state->repeated_boards_number = 0;
+    state->uneventful_moves = 0;
+    state->board_occurences = 1;
+    state->pawn_upgradable = false;
 
-    state->rochade_small_legal_white = true;
-    state->rochade_big_legal_white = true;
-    state->rochade_small_legal_black = true;
-    state->rochade_big_legal_black = true;
+    state->castle_kngsde_legal_white = true;
+    state->castle_qensde_legal_white = true;
+    state->castle_kngsde_legal_black = true;
+    state->castle_qensde_legal_black = true;
 
 //    state->last_move = (Move) { (Square) {0,0}, (Square) {0,0} };
 
