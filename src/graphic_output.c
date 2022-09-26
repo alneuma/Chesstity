@@ -39,11 +39,11 @@ void print_board(Game_state *game_state)
 {
     int i, j;
     printf(" _________________________________________________\n");
-    for (i = 7; i >= 0; --i)
+    for (i = 7; i >= 0; i--)
     {
         printf(" |     |     |     |     |     |     |     |     |\n%d|", i + 1);
 
-        for (j = 0; j<= 7; ++j)
+        for (j = 0; j<= 7; j++)
             printf("  %c  |", piece_to_letter(&game_state->board[i][j]));
 
         printf("\n |_____|_____|_____|_____|_____|_____|_____|_____|\n");

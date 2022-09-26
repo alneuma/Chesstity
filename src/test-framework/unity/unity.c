@@ -2354,9 +2354,9 @@ void UnityPrintExpectedAndActualStringsChess(const char* expected, const char* a
 {
     printf("\nExpected:\t\tWas:\n");
     int i, j;
-    for (i = 0; i < 8; ++i)
+    for (i = 0; i < 8; i++)
     {
-        for (j = 0; j < 8; ++j)
+        for (j = 0; j < 8; j++)
         {
             putchar(*expected++);
             putchar(' ');
@@ -2364,7 +2364,7 @@ void UnityPrintExpectedAndActualStringsChess(const char* expected, const char* a
 
         putchar('\t');
 
-        for (j = 0; j < 8; ++j)
+        for (j = 0; j < 8; j++)
         {
             putchar(*actual++);
             putchar(' ');

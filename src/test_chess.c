@@ -3,6 +3,7 @@
 
 #include "chess_test_creator.h"
 #include "graphic_output.h"
+#include "core_interface.h"
 #include <stdbool.h>
 
 /* unit to be tested */
@@ -118,10 +119,10 @@ void test_active_player_black(void)
     TEST_ASSERT_TRUE(WHITE != player_active(&state));
 }
 
-void test_set_game_state(void)
+void test_set_test_game_state(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     TEST_ASSERT_EQUAL_STRING_CHESS("........"
                                    "........"
                                    "........"
@@ -135,7 +136,7 @@ void test_set_game_state(void)
 void test_is_attacked_by(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -152,7 +153,7 @@ void test_is_attacked_by(void)
 void test_king_square(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -169,7 +170,7 @@ void test_king_square(void)
 void test_check_after_move_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -187,7 +188,7 @@ void test_check_after_move_01(void)
 void test_check_after_move_02(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "....r..."
                               "........"
@@ -212,7 +213,7 @@ void test_check_after_move_02(void)
 void test_write_pawn_possible_moves_01(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -239,7 +240,7 @@ void test_write_pawn_possible_moves_02(void)
     //TEST_IGNORE();
     // test en passant
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -267,7 +268,7 @@ void test_write_pawn_possible_moves_03(void)
     //TEST_IGNORE();
     // test en passant: is_check_after_move()
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               ".....n.."
@@ -293,7 +294,7 @@ void test_write_pawn_possible_moves_03(void)
 void test_write_knight_possible_moves_01(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "...K...."
                               ".....n.."
@@ -318,7 +319,7 @@ void test_write_knight_possible_moves_01(void)
 void test_write_knight_possible_moves_02(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "...K...."
                               "........"
@@ -343,7 +344,7 @@ void test_write_knight_possible_moves_02(void)
 void test_write_bishop_possible_moves(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "..q...b."
@@ -368,7 +369,7 @@ void test_write_bishop_possible_moves(void)
 void test_write_rook_possible_moves(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -393,7 +394,7 @@ void test_write_rook_possible_moves(void)
 void test_write_king_possible_moves_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               ".r......"
                               "........"
@@ -418,7 +419,7 @@ void test_write_king_possible_moves_01(void)
 void test_write_king_possible_moves_02(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -443,7 +444,7 @@ void test_write_king_possible_moves_02(void)
 void test_write_king_possible_moves_03(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -469,7 +470,7 @@ void test_write_king_possible_moves_03(void)
 void test_write_king_possible_moves_04(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -494,7 +495,7 @@ void test_write_king_possible_moves_04(void)
 void test_write_king_possible_moves_05(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;
     board_from_string(&state, "....k..r"
                               "........"
@@ -520,7 +521,7 @@ void test_write_king_possible_moves_05(void)
 void test_write_king_possible_moves_06(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;
     board_from_string(&state, "r...k..r"
                               "........"
@@ -546,7 +547,7 @@ void test_write_king_possible_moves_06(void)
 void test_write_king_possible_moves_07(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;
     board_from_string(&state, "r...k..r"
                               "........"
@@ -573,7 +574,7 @@ void test_write_king_possible_moves_07(void)
 void test_write_king_possible_moves_08(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;
     board_from_string(&state, "rb..k..r"
                               "........"
@@ -600,7 +601,7 @@ void test_write_king_possible_moves_08(void)
 void test_write_king_possible_moves_09(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;
     board_from_string(&state, ".r..k..r"
                               "........"
@@ -627,7 +628,7 @@ void test_write_king_possible_moves_09(void)
 void test_update_possible_moves_game_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "....r..."
                               "........"
@@ -652,7 +653,7 @@ void test_update_possible_moves_game_01(void)
 void test_update_possible_moves_game_02(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -679,7 +680,7 @@ void test_update_possible_moves_game_03(void)
     //TEST_IGNORE();
     // test en passant
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -707,7 +708,7 @@ void test_update_possible_moves_game_04(void)
     //TEST_IGNORE();
     // test en passant: is_check_after_move()
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               ".....n.."
@@ -733,7 +734,7 @@ void test_update_possible_moves_game_04(void)
 void test_update_possible_moves_game_05(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "...K...."
                               ".....n.."
@@ -758,7 +759,7 @@ void test_update_possible_moves_game_05(void)
 void test_update_possible_moves_game_06(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "...K...."
                               "........"
@@ -783,7 +784,7 @@ void test_update_possible_moves_game_06(void)
 void test_update_possible_moves_game_07(void)
 {
     Game_state state;
-    set_game_state(&state);
+    set_test_game_state(&state);
     board_from_string(&state, "........"
                               "........"
                               "..q...b."
@@ -808,7 +809,7 @@ void test_update_possible_moves_game_07(void)
 void test_update_possible_moves_game_08(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               "........"
                               "........"
@@ -833,7 +834,7 @@ void test_update_possible_moves_game_08(void)
 void test_update_possible_moves_game_09(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               ".r......"
                               "........"
@@ -858,7 +859,7 @@ void test_update_possible_moves_game_09(void)
 void test_update_possible_moves_game_10(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "........"
                               ".r......"
                               "........"
@@ -875,7 +876,7 @@ void test_update_possible_moves_game_10(void)
 void test_update_possible_moves_game_11(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B......."
                               ".r...P.."
                               "........"
@@ -892,7 +893,7 @@ void test_update_possible_moves_game_11(void)
 void test_board_string(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B....k.."
                               ".r...P.."
                               "........"
@@ -916,7 +917,7 @@ void test_board_string(void)
 void test_apply_move_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B..k...."
                               ".r...P.."
                               "........"
@@ -941,7 +942,7 @@ void test_apply_move_01(void)
 void test_apply_move_02_uneventful_moves_add(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B..k...."
                               ".r...P.."
                               "........"
@@ -959,7 +960,7 @@ void test_apply_move_02_uneventful_moves_add(void)
 void test_apply_move_03_capturing(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B..k...."
                               ".r...P.."
                               "........"
@@ -984,7 +985,7 @@ void test_apply_move_03_capturing(void)
 void test_apply_move_04_uneventful_moves_reset(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B..k...."
                               ".r...P.."
                               "........"
@@ -1003,7 +1004,7 @@ void test_apply_move_04_uneventful_moves_reset(void)
 void test_apply_move_05_pawn_upgradable(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "B..k...."
                               ".r...P.."
                               "........"
@@ -1021,7 +1022,7 @@ void test_apply_move_05_pawn_upgradable(void)
 void test_apply_move_06_castling_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "r...k..r"
                               "........"
                               "........"
@@ -1046,7 +1047,7 @@ void test_apply_move_06_castling_01(void)
 void test_apply_move_07_castling_02(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "r...k..r"
                               "........"
                               "........"
@@ -1071,7 +1072,7 @@ void test_apply_move_07_castling_02(void)
 void test_apply_move_08_castling_03(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;     // active_player == BLACK
     board_from_string(&state, "r...k..r"
                               "........"
@@ -1097,7 +1098,7 @@ void test_apply_move_08_castling_03(void)
 void test_apply_move_09_castling_04(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;     // active_player == BLACK
     board_from_string(&state, "r...k..r"
                               "........"
@@ -1123,7 +1124,7 @@ void test_apply_move_09_castling_04(void)
 void test_apply_move_10_castling_legality_01(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "r...k..r"
                               "........"
                               "........"
@@ -1142,7 +1143,7 @@ void test_apply_move_10_castling_legality_01(void)
 void test_apply_move_11_castling_legality_02(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "r...k..r"
                               "........"
                               "........"
@@ -1161,7 +1162,7 @@ void test_apply_move_11_castling_legality_02(void)
 void test_apply_move_12_castling_legality_03(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     board_from_string(&state, "r...k..r"
                               "........"
                               "........"
@@ -1180,7 +1181,7 @@ void test_apply_move_12_castling_legality_03(void)
 void test_apply_move_13_castling_legality_04(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;     // active_player == BLACK
     board_from_string(&state, "r...k..r"
                               "........"
@@ -1200,7 +1201,7 @@ void test_apply_move_13_castling_legality_04(void)
 void test_apply_move_14_castling_legality_05(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;     // active_player == BLACK
     board_from_string(&state, "r...k..r"
                               "........"
@@ -1220,7 +1221,7 @@ void test_apply_move_14_castling_legality_05(void)
 void test_apply_move_15_castling_legality_06(void)
 {
     Game_state state;
-    set_game_state(&state);    // active_player == WHITE
+    set_test_game_state(&state);    // active_player == WHITE
     state.move_number = 2;     // active_player == BLACK
     board_from_string(&state, "r...k..r"
                               "........"
@@ -1243,7 +1244,6 @@ int main(void)
     UNITY_BEGIN();
 
     // core_functions.h
-    /*
     RUN_TEST(test_board);
     RUN_TEST(test_is_attacked_by_rook);
     RUN_TEST(test_is_attacked_by_bishop);
@@ -1253,7 +1253,7 @@ int main(void)
     RUN_TEST(test_is_king_square_black);
     RUN_TEST(test_active_player_white);
     RUN_TEST(test_active_player_black);
-    RUN_TEST(test_set_game_state);
+    RUN_TEST(test_set_test_game_state);
     RUN_TEST(test_is_attacked_by);
     RUN_TEST(test_king_square);
     RUN_TEST(test_check_after_move_01);
@@ -1265,7 +1265,6 @@ int main(void)
     RUN_TEST(test_write_knight_possible_moves_02);
     RUN_TEST(test_write_bishop_possible_moves);
     RUN_TEST(test_write_rook_possible_moves);
-    */
     RUN_TEST(test_write_king_possible_moves_01);
     RUN_TEST(test_write_king_possible_moves_02);
     RUN_TEST(test_write_king_possible_moves_03);
@@ -1275,7 +1274,6 @@ int main(void)
     RUN_TEST(test_write_king_possible_moves_07);
     RUN_TEST(test_write_king_possible_moves_08);
     RUN_TEST(test_write_king_possible_moves_09);
-    /*
     RUN_TEST(test_update_possible_moves_game_01);
     RUN_TEST(test_update_possible_moves_game_02);
     RUN_TEST(test_update_possible_moves_game_03);
@@ -1287,7 +1285,6 @@ int main(void)
     RUN_TEST(test_update_possible_moves_game_09);
     RUN_TEST(test_update_possible_moves_game_10);
     RUN_TEST(test_update_possible_moves_game_11);
-    */
     RUN_TEST(test_board_string);
     RUN_TEST(test_apply_move_01);
     RUN_TEST(test_apply_move_02_uneventful_moves_add);

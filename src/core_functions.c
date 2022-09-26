@@ -11,9 +11,9 @@
  ********************************************************************/
 bool compare_boards(Piece board_1[BOARD_ROWS][BOARD_COLUMNS], Piece board_2[BOARD_ROWS][BOARD_COLUMNS])
 {
-    for (int i = 0; i < BOARD_ROWS; ++i)
+    for (int i = 0; i < BOARD_ROWS; i++)
     {
-        for (int j = 0; j < BOARD_COLUMNS; ++j)
+        for (int j = 0; j < BOARD_COLUMNS; j++)
         {
             if ((board_1[i][j].color != board_2[i][j].color)
              || (board_1[i][j].kind != board_2[i][j].kind))
@@ -98,7 +98,7 @@ Game_state *apply_move(Game_state *state, Move move)
     // updating uneventful_moves if nothing spectacular happened
     else
     {
-        ++new_state->uneventful_moves;
+        new_state->uneventful_moves++;
     }
 
     // processing king move effects
@@ -156,7 +156,7 @@ Game_state *apply_move(Game_state *state, Move move)
     new_state->board[move.from.row][move.from.column] = (Piece) {NONE, EMPTY};
 
     // update remaining variablies in new_state
-    ++new_state->move_number;
+    new_state->move_number++;
     new_state->possible_moves_number = 0;
     update_possible_moves_game(new_state);
     new_state->last_move = (Move) {(Square) {move.from.row, move.from.column}, (Square) {move.to.row, move.to.column}};
@@ -210,9 +210,9 @@ Square *king_square(Game_state *game_state, Color player)
 void update_possible_moves_game(Game_state *state)
 {
     Color active_player = player_active(state);
-    for (int i = 0; i < BOARD_ROWS; ++i)
+    for (int i = 0; i < BOARD_ROWS; i++)
     {
-        for (int j = 0; j < BOARD_COLUMNS; ++j)
+        for (int j = 0; j < BOARD_COLUMNS; j++)
         {
             if (state->board[i][j].color == active_player)
             {
@@ -281,7 +281,7 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
          && (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
 
         // moving two squares
@@ -293,7 +293,7 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
            && (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
 
         // capturing left
@@ -313,7 +313,7 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
                (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
 
         // capturing right
@@ -332,7 +332,7 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
                (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
 }
@@ -352,7 +352,7 @@ void write_knight_possible_moves(Game_state *state, Square *square)
     int row_modifier[8] = {-2, -2, -1, -1, 1, 1, 2, 2};
     int column_modifier[8] = {-1, 1, -2, 2, -2, 2, -1, 1};
     int row, column;
-    for (int i = 0; i < 8; ++i) // 8 == length of modifier arrays
+    for (int i = 0; i < 8; i++) // 8 == length of modifier arrays
     {
         row = square->row + row_modifier[i];
         column = square->column + column_modifier[i]; 
@@ -383,7 +383,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
     int row;
     int column;
     for (row = square->row + 1, column = square->column - 1;
-         row < BOARD_ROWS && column >= 0; ++row, --column)
+         row < BOARD_ROWS && column >= 0; row++, column--)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -391,7 +391,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row < BOARD_ROWS)
@@ -400,7 +400,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // upper-right
@@ -413,7 +413,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row < BOARD_ROWS)
@@ -422,12 +422,12 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // lower-left
     for (row = square->row - 1, column = square->column - 1;
-         row >= 0 && column >= 0; --row, --column)
+         row >= 0 && column >= 0; row--, column--)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -435,7 +435,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row >= 0)
@@ -444,12 +444,12 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // lower-right
     for (row = square->row - 1, column = square->column + 1;
-         row >= 0 && column < BOARD_COLUMNS; --row, ++column)
+         row >= 0 && column < BOARD_COLUMNS; row--, column++)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -457,7 +457,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row >= 0)
@@ -466,7 +466,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 }
 
@@ -482,7 +482,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
     // left
     int row = square->row;
     int column;
-    for (column = square->column - 1; column >= 0; --column)
+    for (column = square->column - 1; column >= 0; column--)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -490,7 +490,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((column >= 0)
@@ -498,11 +498,11 @@ void write_rook_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // right
-    for (column = square->column + 1; column < BOARD_COLUMNS; ++column)
+    for (column = square->column + 1; column < BOARD_COLUMNS; column++)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -510,7 +510,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((column < BOARD_COLUMNS)
@@ -518,12 +518,12 @@ void write_rook_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // above
     column = square->column;
-    for (row = square->row + 1; row < BOARD_ROWS; ++row)
+    for (row = square->row + 1; row < BOARD_ROWS; row++)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -531,7 +531,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row < BOARD_ROWS)
@@ -539,12 +539,12 @@ void write_rook_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 
     // below
     column = square->column;
-    for (row = square->row - 1; row >= 0; --row)
+    for (row = square->row - 1; row >= 0; row--)
     {
         if (EMPTY != state->board[row][column].kind)
             break;
@@ -552,7 +552,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     if ((row >= 0)
@@ -560,7 +560,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
      && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
-        ++state->possible_moves_number;
+        state->possible_moves_number++;
     }
 }
 
@@ -575,7 +575,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
 
     // standard moves
     int row, column;
-    for (row = square->row - 1; row <= square->row + 1; ++row)
+    for (row = square->row - 1; row <= square->row + 1; row++)
     {
         for (column = square-> column - 1; column <= square->column + 1; ++column)
         {
@@ -587,7 +587,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
             else if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
             {
                 state->possible_moves[square->row][square->column][row][column] = true;
-                ++state->possible_moves_number;
+                state->possible_moves_number++;
             }
         }
     }
@@ -606,7 +606,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
          && (!is_attacked_by(state, (Square) {0,5}, BLACK)))
         {
             state->possible_moves[square->row][square->column][0][6] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
 
         // queenside
@@ -620,7 +620,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
          && (!is_attacked_by(state, (Square) {0,2}, BLACK)))
         {
             state->possible_moves[square->row][square->column][0][2] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
     else if ((BLACK == active_player)
@@ -636,7 +636,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
          && (!is_attacked_by(state, (Square) {7,5}, WHITE)))
         {
             state->possible_moves[square->row][square->column][7][6] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
 
         // queenside
@@ -650,7 +650,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
          && (!is_attacked_by(state, (Square) {7,2}, WHITE)))
         {
             state->possible_moves[square->row][square->column][7][2] = true;
-            ++state->possible_moves_number;
+            state->possible_moves_number++;
         }
     }
 }
@@ -701,7 +701,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     /* check left */
     int row = square.row;
     int column;
-    for (column = square.column - 1; column >= 0; --column)
+    for (column = square.column - 1; column >= 0; column--)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -717,7 +717,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     }
 
     /* check right */
-    for (column = square.column + 1; column < BOARD_COLUMNS; ++column)
+    for (column = square.column + 1; column < BOARD_COLUMNS; column++)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -734,7 +734,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     
     /* check above */
     column = square.column;
-    for (row = square.row + 1; row < BOARD_ROWS; ++row)
+    for (row = square.row + 1; row < BOARD_ROWS; row++)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -750,7 +750,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     }
 
     /* check below */
-    for (row = square.row - 1; row >= 0; --row)
+    for (row = square.row - 1; row >= 0; row--)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -767,7 +767,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
 
     /* check upper left */
     for (row = square.row + 1, column = square.column - 1;
-         row < BOARD_ROWS && column >= 0; ++row, --column)
+         row < BOARD_ROWS && column >= 0; row++, column--)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -785,7 +785,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
 
     /* check upper right */
     for (row = square.row + 1, column = square.column + 1;
-         row < BOARD_ROWS && column < BOARD_COLUMNS; ++row, ++column)
+         row < BOARD_ROWS && column < BOARD_COLUMNS; row++, column++)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -803,7 +803,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
 
     /* check lower left */
     for (row = square.row - 1, column = square.column - 1;
-         row >= 0 && column >= 0; --row, --column)
+         row >= 0 && column >= 0; row--, column--)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -821,7 +821,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
 
     /* check lower right */
     for (row = square.row - 1, column = square.column + 1;
-         row >= 0 && column < BOARD_COLUMNS; --row, ++column)
+         row >= 0 && column < BOARD_COLUMNS; row--, column++)
     {
         if (EMPTY != game_state->board[row][column].kind)
         {
@@ -840,7 +840,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     /* check knights */
     int row_modifier[8] = {-2, -2, -1, -1, 1, 1, 2, 2};
     int column_modifier[8] = {-1, 1, -2, 2, -2, 2, -1, 1};
-    for (int i = 0; i < 8; ++i) // 8 == length of modifier arrays
+    for (int i = 0; i < 8; i++) // 8 == length of modifier arrays
     {
         if ((square.row + row_modifier[i] < 0)
          || (square.row + row_modifier[i] >= BOARD_ROWS)
