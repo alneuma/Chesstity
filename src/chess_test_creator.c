@@ -5,13 +5,30 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+enum letter_piece_test_i
+{
+    NONE_EMPTY_test_i = '.',
+    WHITE_PAWN_test_i = 'P',
+    WHITE_KNIGHT_test_i = 'N',
+    WHITE_BISHOP_test_i = 'B',
+    WHITE_ROOK_test_i = 'R',
+    WHITE_QUEEN_test_i = 'Q',
+    WHITE_KING_test_i = 'K', 
+    BLACK_PAWN_test_i = 'p',
+    BLACK_KNIGHT_test_i = 'n',
+    BLACK_BISHOP_test_i = 'b',
+    BLACK_ROOK_test_i = 'r',
+    BLACK_QUEEN_test_i = 'q',
+    BLACK_KING_test_i = 'k', 
+};
+
 /********************************************************************
  * possible_moves_string: Retruns a pointer to a string displaying  *
  *                        the possible moves of saquare at state.   *
  *                        The string is staticly stored inside the  *
  *                        functions body.                           *
  ********************************************************************/
-char *possible_moves_string(Game_state *state, Square square)
+char *possible_moves_string(Game_state *state, Square_i square)
 {
     static char moves_string[] = "........"
                                  "........"
@@ -97,20 +114,20 @@ void set_test_game_state(Game_state *state)
     state->castle_kngsde_legal_black = true;
     state->castle_qensde_legal_black = true;
 
-//    state->last_move = (Move) { (Square) {0,0}, (Square) {0,0} };
+//    state->last_move = (Move_i) { (Square_i) {0,0}, (Square_i) {0,0} };
 
     for (int i = 0; i < BOARD_ROWS; i++)
     {
         for (int j = 0; j < BOARD_COLUMNS; j++)
         {
-            state->board[i][j] = (Piece) {NONE,EMPTY};
+            state->board[i][j] = (Piece_i) {NONE_i,EMPTY};
         }
     }
 
-//    state->board[4][0] = (Piece) {WHITE,KING};
-//    state->king_white = (Square) {4,0};
-//    state->board[4][BOARD_ROWS-1] = (Piece) {BLACK,KING};
-//    state->king black = (Square) {4,BORAD_ROWS-1};
+//    state->board[4][0] = (Piece_i) {WHITE_i,KING};
+//    state->king_white = (Square_i) {4,0};
+//    state->board[4][BOARD_ROWS-1] = (Piece_i) {BLACK_i,KING};
+//    state->king black = (Square_i) {4,BORAD_ROWS-1};
 
     for (int i = 0; i < BOARD_ROWS; i++)
     {
@@ -129,4 +146,73 @@ void set_test_game_state(Game_state *state)
     state->possible_moves_number = 0;
 
 //    struct game_state *previous_game_state;
+}
+
+/********************************************************************
+ * letter_to_piece: Converts an int (Letter_piece) representation   *
+ *                  of a piece which is used for writing            *
+ *                  chess-debugging-scripts into the internally     *
+ *                  used struct (Piece_i) representation of a piece *
+ *                  type.                                           *
+ ********************************************************************/
+static Piece_i letter_to_piece(const Letter_piece_test_i letter)
+{
+    switch (letter)
+    {
+        case NONE_EMPTY_test_i:         return (Piece_i) {NONE_i, EMPTY};
+        case WHITE_PAWN_test_i:    return (Piece_i) {WHITE_i, PAWN};
+        case WHITE_KNIGHT_test_i:  return (Piece_i) {WHITE_i, KNIGHT};
+        case WHITE_BISHOP_test_i:  return (Piece_i) {WHITE_i, BISHOP};
+        case WHITE_ROOK_test_i:    return (Piece_i) {WHITE_i, ROOK};
+        case WHITE_QUEEN_test_i:   return (Piece_i) {WHITE_i, QUEEN};
+        case WHITE_KING_test_i:    return (Piece_i) {WHITE_i, KING};
+        case BLACK_PAWN_test_i:    return (Piece_i) {BLACK_i, PAWN};
+        case BLACK_KNIGHT_test_i:  return (Piece_i) {BLACK_i, KNIGHT};
+        case BLACK_BISHOP_test_i:  return (Piece_i) {BLACK_i, BISHOP};
+        case BLACK_ROOK_test_i:    return (Piece_i) {BLACK_i, ROOK};
+        case BLACK_QUEEN_test_i:   return (Piece_i) {BLACK_i, QUEEN};
+        case BLACK_KING_test_i:    return (Piece_i) {BLACK_i, KING};
+        default:                printf("error: %s: unknown letter representation of piece; terminating\n", __func__);
+                                exit(EXIT_FAILURE);
+    }
+}
+
+/********************************************************************
+ * set_board: Writes the board_state represented by                 *
+ *            board_string into state->board.                       *
+ *            board_string should be of the following               *
+ *            format:                                               *
+ *            Letter_piece board_string[] = "rnbqkbnr"              *
+ *                                          "pppppppp"              *
+ *                                          "........"              *
+ *                                          "........"              *
+ *                                          "........"              *
+ *                                          "........"              *
+ *                                          "PPPPPPPP"              *
+ *                                          "RNBQKBNR";             *
+ *            Here uppper case letters represent black              *
+ *            pieces, lower-case letters represent white            *
+ *            pieces and '*' character represent empty              *
+ *            squares.                                              *
+ *            Can be adjusted in chess_test_creater.h               *
+ *            (typedef Letter_piece).                               *
+ *            Like board_from_string (core_interface.c) but public. *
+ ********************************************************************/
+void set_board(Game_state *state, const Letter_piece_test_i *board_string)
+{
+    const char *p = board_string;
+    int i = BOARD_ROWS;
+    int j;
+    while (*p)
+    {
+        if ((j = (p - board_string) % BOARD_COLUMNS) == 0)
+            i--;
+
+        if (WHITE_KING_test_i == *p)
+            state->king_white = (Square_i) {i,j};
+        else if (BLACK_KING_test_i == *p)
+            state->king_black = (Square_i) {i,j};
+        
+        state->board[i][j] = letter_to_piece(*p++);
+    }
 }

@@ -3,13 +3,48 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct game {
+// the starting setup of the board
+#define STARTING_BOARD "rnbqkbnr"   \
+                       "pppppppp"   \
+                       "........"   \
+                       "........"   \
+                       "........"   \
+                       "........"   \
+                       "PPPPPPPP"   \
+                       "RNBQKBNR"
+
+enum letter_piece
+{
+    NONE_EMPTY = '.',
+    WHITE_PAWN = 'P',
+    WHITE_KNIGHT = 'N',
+    WHITE_BISHOP = 'B',
+    WHITE_ROOK = 'R',
+    WHITE_QUEEN = 'Q',
+    WHITE_KING = 'K', 
+    BLACK_PAWN = 'p',
+    BLACK_KNIGHT = 'n',
+    BLACK_BISHOP = 'b',
+    BLACK_ROOK = 'r',
+    BLACK_QUEEN = 'q',
+    BLACK_KING = 'k', 
+};
+
+struct game
+{
     Game_state *current_state;
 };
 
+static void set_game_state(Game_state *state, const Letter_piece *board);
+static Piece_i letter_to_piece(const Letter_piece letter);
+
+/********************************************************************
+ * create_game: Creates a Game object, which is a linked list, with *
+ *              variables of type Game_state as nodes.              *
+ ********************************************************************/
 Game create_game(void)
 {
-    Game new_game = malloc(sizeof(*new_game));
+    Game new_game = malloc(sizeof(new_game));
     if (NULL == new_game)
     {
         printf("error: %s: memoryallocation for new game failed", __func__);
@@ -23,28 +58,25 @@ Game create_game(void)
         exit(EXIT_FAILURE);
     }
 
-    set_game_state(beg_state, "rbnqknbr"
-                              "pppppppp"
-                              "........"
-                              "........"
-                              "........"
-                              "........"
-                              "PPPPPPPP"
-                              "RBNQKNBR");
+    set_game_state(beg_state, STARTING_BOARD);
 
     new_game->current_state = beg_state;
 
     return new_game;
 }
 
+/********************************************************************
+ * destroy_game: Destroys a Game object freeing all the used        *
+ *               memory.                                            *   
+ ********************************************************************/
 void destroy_game(Game game)
 {
     Game_state *temp;
 
-    while (NULL != game->current_state->previous_game_state)
+    while (NULL != game->current_state->previous_state)
     {
         temp = game->current_state;
-        game->current_state = game->current_state->previous_game_state;
+        game->current_state = game->current_state->previous_state;
         free(temp);
     }
     free(game->current_state);
@@ -71,9 +103,9 @@ void destroy_game(Game game)
  *                    Can be adjusted in chess_test_creater.h       *
  *                    (typedef Letter_piece).                       *
  ********************************************************************/
-void board_from_string(Game_state *state, Letter_piece *board_string)
+static void board_from_string(Game_state *state, const Letter_piece *board_string)
 {
-    char *p = board_string;
+    const char *p = board_string;
     int i = BOARD_ROWS;
     int j;
     while (*p)
@@ -81,10 +113,10 @@ void board_from_string(Game_state *state, Letter_piece *board_string)
         if ((j = (p - board_string) % BOARD_COLUMNS) == 0)
             i--;
 
-        if (LET_WHITE_KING == *p)
-            state->king_white = (Square) {i,j};
-        else if (LET_BLACK_KING == *p)
-            state->king_black = (Square) {i,j};
+        if (WHITE_KING == *p)
+            state->king_white = (Square_i) {i,j};
+        else if (BLACK_KING == *p)
+            state->king_black = (Square_i) {i,j};
         
         state->board[i][j] = letter_to_piece(*p++);
     }
@@ -94,28 +126,28 @@ void board_from_string(Game_state *state, Letter_piece *board_string)
  * letter_to_piece: Converts an int (Letter_piece) representation   *
  *                  of a piece which is used for writing            *
  *                  chess-debugging-scripts into the internally     *
- *                  used struct (Piece) representation of a piece   *
+ *                  used struct (Piece_i) representation of a piece *
  *                  type.                                           *
  ********************************************************************/
-Piece letter_to_piece(Letter_piece letter)
+static Piece_i letter_to_piece(const Letter_piece letter)
 {
     switch (letter)
     {
-        case LET_EMPTY:         return (Piece) {NONE, EMPTY};
-        case LET_WHITE_PAWN:    return (Piece) {WHITE, PAWN};
-        case LET_WHITE_KNIGHT:  return (Piece) {WHITE, KNIGHT};
-        case LET_WHITE_BISHOP:  return (Piece) {WHITE, BISHOP};
-        case LET_WHITE_ROOK:    return (Piece) {WHITE, ROOK};
-        case LET_WHITE_QUEEN:   return (Piece) {WHITE, QUEEN};
-        case LET_WHITE_KING:    return (Piece) {WHITE, KING};
-        case LET_BLACK_PAWN:    return (Piece) {BLACK, PAWN};
-        case LET_BLACK_KNIGHT:  return (Piece) {BLACK, KNIGHT};
-        case LET_BLACK_BISHOP:  return (Piece) {BLACK, BISHOP};
-        case LET_BLACK_ROOK:    return (Piece) {BLACK, ROOK};
-        case LET_BLACK_QUEEN:   return (Piece) {BLACK, QUEEN};
-        case LET_BLACK_KING:    return (Piece) {BLACK, KING};
+        case NONE_EMPTY:    return (Piece_i) {NONE_i, EMPTY};
+        case WHITE_PAWN:    return (Piece_i) {WHITE_i, PAWN};
+        case WHITE_KNIGHT:  return (Piece_i) {WHITE_i, KNIGHT};
+        case WHITE_BISHOP:  return (Piece_i) {WHITE_i, BISHOP};
+        case WHITE_ROOK:    return (Piece_i) {WHITE_i, ROOK};
+        case WHITE_QUEEN:   return (Piece_i) {WHITE_i, QUEEN};
+        case WHITE_KING:    return (Piece_i) {WHITE_i, KING};
+        case BLACK_PAWN:    return (Piece_i) {BLACK_i, PAWN};
+        case BLACK_KNIGHT:  return (Piece_i) {BLACK_i, KNIGHT};
+        case BLACK_BISHOP:  return (Piece_i) {BLACK_i, BISHOP};
+        case BLACK_ROOK:    return (Piece_i) {BLACK_i, ROOK};
+        case BLACK_QUEEN:   return (Piece_i) {BLACK_i, QUEEN};
+        case BLACK_KING:    return (Piece_i) {BLACK_i, KING};
         default:                printf("error: %s: unknown letter representation of piece; terminating\n", __func__);
-                                exit(EXIT_SUCCESS);
+                                exit(EXIT_FAILURE);
     }
 }
 
@@ -123,9 +155,9 @@ Piece letter_to_piece(Letter_piece letter)
  * set_game_state: Takes a Game_state and sets it's values to       *
  *                 default testing value.                           *
  *                 Ignores last_move, king_white, king_black and    *
- *                 *previous_game_state.                            *
+ *                 *previous_state.                            *
  ********************************************************************/
-void set_game_state(Game_state *state, Letter_piece *board)
+static void set_game_state(Game_state *state, const Letter_piece *board)
 {
     state->move_number = 1;
     state->uneventful_moves = 0;
@@ -136,7 +168,7 @@ void set_game_state(Game_state *state, Letter_piece *board)
     state->castle_kngsde_legal_black = true;
     state->castle_qensde_legal_black = true;
 
-    //state->last_move = (Move) { (Square) {0,0}, (Square) {0,0} };
+    //state->last_move = (Move_i) { (Square_i) {0,0}, (Square_i) {0,0} };
 
     board_from_string(state, board);
 
@@ -158,8 +190,8 @@ void set_game_state(Game_state *state, Letter_piece *board)
     update_possible_moves_game(state);
 
     //check if passive player can upgrade pawn
-    Color passive_player = player_passive(state);
-    int pawn_upgrade_row = (WHITE == passive_player) ? BOARD_ROWS : 0;
+    Color_i passive_player = player_passive(state);
+    int pawn_upgrade_row = (WHITE_i == passive_player) ? BOARD_ROWS : 0;
     state->pawn_upgradable = false;
     for (int i = 0; i < BOARD_COLUMNS; i++)
     {
@@ -170,5 +202,5 @@ void set_game_state(Game_state *state, Letter_piece *board)
         }
     }
 
-    state->previous_game_state = NULL;
+    state->previous_state = NULL;
 }

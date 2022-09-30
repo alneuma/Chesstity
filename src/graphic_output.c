@@ -7,7 +7,7 @@
 /********************************************************************
  * piece_to_letter: Returns the letter associated with a piece.     *
  ********************************************************************/
-char piece_to_letter(Piece *piece)
+char piece_to_letter(Piece_i *piece)
 {
     char letter;
     switch (piece->kind)
@@ -29,7 +29,7 @@ char piece_to_letter(Piece *piece)
                         exit(EXIT_SUCCESS);
     }
 
-    return (BLACK == piece->color) ? tolower(letter) : letter;
+    return (BLACK_i == piece->color) ? tolower(letter) : letter;
 }
 
 /********************************************************************

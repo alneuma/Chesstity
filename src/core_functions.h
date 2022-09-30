@@ -7,28 +7,28 @@
 #define BOARD_ROWS 8
 #define BOARD_COLUMNS 8
 
-typedef enum color {
-    NONE, WHITE, BLACK,
-} Color;
+typedef enum color_i {
+    NONE_i, WHITE_i, BLACK_i,
+} Color_i;
 
-typedef enum piece_kind {
-    EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
-} Piece_kind;
-
-typedef struct piece {
-    Color color;
-    Piece_kind kind;
-} Piece;
-
-typedef struct square {
+typedef struct square_i {
     int row;
     int column;
-} Square;
+} Square_i;
 
-typedef struct move {
-    Square from;
-    Square to;
-} Move;
+typedef struct move_i {
+    Square_i from;
+    Square_i to;
+} Move_i;
+
+typedef enum kind_i {
+    EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
+} Kind_i;
+
+typedef struct piece_i {
+    Color_i color;
+    Kind_i kind;
+} Piece_i;
 
 typedef struct game_state {
     int move_number;
@@ -39,13 +39,13 @@ typedef struct game_state {
     bool castle_kngsde_legal_black;
     bool castle_qensde_legal_black;
     bool pawn_upgradable;
-    Move last_move;
-    Piece board[BOARD_ROWS][BOARD_COLUMNS];
-    Square king_white;
-    Square king_black;
+    Move_i last_move;
+    Piece_i board[BOARD_ROWS][BOARD_COLUMNS];
+    Square_i king_white;
+    Square_i king_black;
     bool possible_moves[BOARD_ROWS][BOARD_COLUMNS][BOARD_ROWS][BOARD_COLUMNS];
     int possible_moves_number;
-    struct game_state *previous_game_state;
+    struct game_state *previous_state;
 } Game_state;
 
 /********************************************************************
@@ -54,7 +54,7 @@ typedef struct game_state {
  *                 Other possible Game_state qualities are not      *
  *                 checked.                                         *
  ********************************************************************/
-bool compare_boards(Piece board_1[BOARD_ROWS][BOARD_COLUMNS], Piece board_2[BOARD_ROWS][BOARD_COLUMNS]);
+bool compare_boards(Piece_i board_1[BOARD_ROWS][BOARD_COLUMNS], Piece_i board_2[BOARD_ROWS][BOARD_COLUMNS]);
 
 /********************************************************************
  * board_repeated: Counts the number of times the actual board-     *
@@ -71,23 +71,23 @@ int board_repeated(Game_state *state);
  *             Returns NULL if memoryallocation fails.              *
  *             Assumes that move is legal.                          *
  ********************************************************************/
-Game_state *apply_move(Game_state *state, Move move);
+Game_state *apply_move(Game_state *state, Move_i move);
 
 /********************************************************************
  * player_active: Returns the color of the active player.           *
  ********************************************************************/
-Color player_active(Game_state *state);
+Color_i player_active(Game_state *state);
 
 /********************************************************************
  * player_passive: Returns the color of the active player.          *
  ********************************************************************/
-Color player_passive(Game_state *state);
+Color_i player_passive(Game_state *state);
 
 /********************************************************************
  * king_square: Returns a pointer to the square of players's king   *
  *              at a given Game_state.                              *
  ********************************************************************/
-Square *king_square(Game_state *game_state, Color player);
+Square_i *king_square(Game_state *game_state, Color_i player);
 
 /********************************************************************
  * update_possible_moves_game: Looks at certain parameters of a     *
@@ -107,49 +107,49 @@ void update_possible_moves_game(Game_state *game_state);
  *                              game_state->possible moves are set  *
  *                              to false.                           *
  ********************************************************************/
-void write_possible_moves_square(Game_state *game_state, Square square);
+void write_possible_moves_square(Game_state *game_state, Square_i square);
 
 /********************************************************************
  * write_pawn_possible_moves: Only gets called by                   *
  *                            write_possible_moves_square().        *
  *                            Makes the same assumption.            *
  ********************************************************************/
-void write_pawn_possible_moves(Game_state *state, Square *square);
+void write_pawn_possible_moves(Game_state *state, Square_i *square);
 
 /********************************************************************
  * write_knight_possible_moves: Only gets called by                 *
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_knight_possible_moves(Game_state *state, Square *square);
+void write_knight_possible_moves(Game_state *state, Square_i *square);
 
 /********************************************************************
  * write_bishop_possible_moves: Only gets called by                 *
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_bishop_possible_moves(Game_state *state, Square *square);
+void write_bishop_possible_moves(Game_state *state, Square_i *square);
 
 /********************************************************************
  * write_rook_possible_moves: Only gets called by                   *
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_rook_possible_moves(Game_state *state, Square *square);
+void write_rook_possible_moves(Game_state *state, Square_i *square);
 
 /********************************************************************
  * write_king_possible_moves: Only gets called by                   *
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_king_possible_moves(Game_state *state, Square *square);
+void write_king_possible_moves(Game_state *state, Square_i *square);
 
 /********************************************************************
  * in_check_after_move: Checks if the moving player at a given game *
  *                      state would be in check after a potential   *
  *                      move.                                       *
  ********************************************************************/
-bool in_check_after_move(Game_state *state, Move move);
+bool in_check_after_move(Game_state *state, Move_i move);
 
 /********************************************************************
  * is_attacked_by: To see if rochade is possible, it is necessary   *
@@ -159,6 +159,6 @@ bool in_check_after_move(Game_state *state, Move move);
  *                 also could prove useful for the AI to plan       *
  *                 moves.                                           *
  ********************************************************************/
-bool is_attacked_by(Game_state *game_state, Square square, Color attacking_player);
+bool is_attacked_by(Game_state *game_state, Square_i square, Color_i attacking_player);
 
 #endif

@@ -9,7 +9,7 @@
  *                 Is necessary to determine if draw can be         *
  *                 claimed.                                         *
  ********************************************************************/
-bool compare_boards(Piece board_1[BOARD_ROWS][BOARD_COLUMNS], Piece board_2[BOARD_ROWS][BOARD_COLUMNS])
+bool compare_boards(Piece_i board_1[BOARD_ROWS][BOARD_COLUMNS], Piece_i board_2[BOARD_ROWS][BOARD_COLUMNS])
 {
     for (int i = 0; i < BOARD_ROWS; i++)
     {
@@ -36,7 +36,7 @@ int board_repeated(Game_state *state)
     while (ptr->move_number > 2)
     {
         // It is enough to examine every second boards-state because two of them are not the same, when different players are to move.
-        ptr = ptr->previous_game_state->previous_game_state;
+        ptr = ptr->previous_state->previous_state;
 
         // Here more equalities are checked than would be strictly necessary.
         // I do this to provoce operator short-circuting (and thus hopefully check less equalities).
@@ -59,16 +59,16 @@ int board_repeated(Game_state *state)
  *             Returns NULL if memoryallocation fails.              *
  *             Assumes that move is legal.                          *
  ********************************************************************/
-Game_state *apply_move(Game_state *state, Move move)
+Game_state *apply_move(Game_state *state, Move_i move)
 {
     Game_state *new_state = malloc(sizeof(*new_state));
     if (NULL == new_state)
         return NULL;
 
     *new_state = *state;
-    new_state->previous_game_state = state;
+    new_state->previous_state = state;
 
-    Color moving_player = player_active(state);
+    Color_i moving_player = player_active(state);
 
     // processing pawn-move-effects
     // and updating new_state->uneventful_moves
@@ -82,7 +82,7 @@ Game_state *apply_move(Game_state *state, Move move)
         if ((move.from.column != move.to.column)
          && (EMPTY == state->board[move.to.row][move.to.column].kind))
         {
-            new_state->board[move.from.row][move.to.column] = (Piece) {NONE, EMPTY};
+            new_state->board[move.from.row][move.to.column] = (Piece_i) {NONE_i, EMPTY};
         }
         // checking if pawn can be upgraded (can't happen in the same turn as en passant capturing)
         else if ((0 == move.to.row) || (BOARD_ROWS - 1 == move.to.row))
@@ -107,42 +107,42 @@ Game_state *apply_move(Game_state *state, Move move)
         // moving rook in case of kingside castling
         if (move.from.column + 2 == move.to.column)
         {
-            new_state->board[move.from.row][move.from.column + 1] = (Piece) {moving_player, ROOK};
-            new_state->board[move.from.row][BOARD_COLUMNS - 1] = (Piece) {NONE, EMPTY};
+            new_state->board[move.from.row][move.from.column + 1] = (Piece_i) {moving_player, ROOK};
+            new_state->board[move.from.row][BOARD_COLUMNS - 1] = (Piece_i) {NONE_i, EMPTY};
         }
         // moving rook in case of queenside castling
         else if (move.from.column - 2 == move.to.column)
         {
-            new_state->board[move.from.row][move.from.column - 1] = (Piece) {moving_player, ROOK};
-            new_state->board[move.from.row][0] = (Piece) {NONE, EMPTY};
+            new_state->board[move.from.row][move.from.column - 1] = (Piece_i) {moving_player, ROOK};
+            new_state->board[move.from.row][0] = (Piece_i) {NONE_i, EMPTY};
         }
 
         // updating king squares and future castling legality
-        if (WHITE == moving_player)
+        if (WHITE_i == moving_player)
         {
-            new_state->king_white = (Square) {move.to.row, move.to.column};
+            new_state->king_white = (Square_i) {move.to.row, move.to.column};
             new_state->castle_kngsde_legal_white = false;
             new_state->castle_qensde_legal_white = false;
         }
-        else if (BLACK == moving_player)
+        else if (BLACK_i == moving_player)
         {
-            new_state->king_black = (Square) {move.to.row, move.to.column};
+            new_state->king_black = (Square_i) {move.to.row, move.to.column};
             new_state->castle_kngsde_legal_black = false;
             new_state->castle_qensde_legal_black = false;
         }
     }
     // updating future castling legality in case of rook-move
     else if ((ROOK == state->board[move.from.row][move.from.column].kind)
-          && (move.from.row == ((WHITE == moving_player) ? 0 : BOARD_ROWS - 1)))
+          && (move.from.row == ((WHITE_i == moving_player) ? 0 : BOARD_ROWS - 1)))
     {
-        if (WHITE == moving_player)
+        if (WHITE_i == moving_player)
         {
             if (move.from.column == BOARD_COLUMNS - 1)
                 new_state->castle_kngsde_legal_white = false;
             else if (move.from.column == 0)
                 new_state->castle_qensde_legal_white = false;
         }
-        else if (BLACK == moving_player)
+        else if (BLACK_i == moving_player)
         {
             if (move.from.column == BOARD_COLUMNS - 1)
                 new_state->castle_kngsde_legal_black = false;
@@ -153,13 +153,13 @@ Game_state *apply_move(Game_state *state, Move move)
 
     // move the moving piece
     new_state->board[move.to.row][move.to.column] = new_state->board[move.from.row][move.from.column];
-    new_state->board[move.from.row][move.from.column] = (Piece) {NONE, EMPTY};
+    new_state->board[move.from.row][move.from.column] = (Piece_i) {NONE_i, EMPTY};
 
     // update remaining variablies in new_state
     new_state->move_number++;
     new_state->possible_moves_number = 0;
     update_possible_moves_game(new_state);
-    new_state->last_move = (Move) {(Square) {move.from.row, move.from.column}, (Square) {move.to.row, move.to.column}};
+    new_state->last_move = (Move_i) {(Square_i) {move.from.row, move.from.column}, (Square_i) {move.to.row, move.to.column}};
 
     new_state->board_occurences = board_repeated(new_state);
 
@@ -169,7 +169,7 @@ Game_state *apply_move(Game_state *state, Move move)
 /********************************************************************
  * player_active: Returns the color of the active player.           *
  ********************************************************************/
-Color player_active(Game_state *state)
+Color_i player_active(Game_state *state)
 {
     return (state->move_number - 1) % 2 + 1;
 }
@@ -177,7 +177,7 @@ Color player_active(Game_state *state)
 /********************************************************************
  * player_passive: Returns the color of the active player.          *
  ********************************************************************/
-Color player_passive(Game_state *state)
+Color_i player_passive(Game_state *state)
 {
     return state->move_number % 2 + 1;
 }
@@ -189,11 +189,11 @@ Color player_passive(Game_state *state)
  *              the position of a players king without the need of  *
  *              conditional statements in the code.                 *
  ********************************************************************/
-Square *king_square(Game_state *game_state, Color player)
+Square_i *king_square(Game_state *game_state, Color_i player)
 {
-    if (WHITE == player)
+    if (WHITE_i == player)
         return &game_state->king_white;
-    else if (BLACK == player)
+    else if (BLACK_i == player)
         return &game_state->king_black;
     else
     {
@@ -209,14 +209,14 @@ Square *king_square(Game_state *game_state, Color player)
  ********************************************************************/
 void update_possible_moves_game(Game_state *state)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
     for (int i = 0; i < BOARD_ROWS; i++)
     {
         for (int j = 0; j < BOARD_COLUMNS; j++)
         {
             if (state->board[i][j].color == active_player)
             {
-                write_possible_moves_square(state, (Square) {i,j});
+                write_possible_moves_square(state, (Square_i) {i,j});
             }
         }
     }
@@ -233,9 +233,9 @@ void update_possible_moves_game(Game_state *state)
  *                              state->possible moves are set       *
  *                              to false.                           *
  ********************************************************************/
-void write_possible_moves_square(Game_state *state, Square square)
+void write_possible_moves_square(Game_state *state, Square_i square)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
     if (state->board[square.row][square.column].color != active_player)
         return;
     switch (state->board[square.row][square.column].kind)
@@ -263,11 +263,11 @@ void write_possible_moves_square(Game_state *state, Square square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumption.            *
  ********************************************************************/
-void write_pawn_possible_moves(Game_state *state, Square *square)
+void write_pawn_possible_moves(Game_state *state, Square_i *square)
 {
-    Color active_player = player_active(state);
-    Color passive_player = (WHITE == active_player) ? BLACK : WHITE;
-    int move_direction = (WHITE == active_player) ? 1 : -1;
+    Color_i active_player = player_active(state);
+    Color_i passive_player = (WHITE_i == active_player) ? BLACK_i : WHITE_i;
+    int move_direction = (WHITE_i == active_player) ? 1 : -1;
 
     // declaring row and column of target square
     int target_row = square->row + move_direction;
@@ -278,7 +278,7 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
 
         // moving one square
         if ((EMPTY == state->board[target_row][target_column].kind)
-         && (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
+         && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
             state->possible_moves_number++;
@@ -286,11 +286,11 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
 
         // moving two squares
         target_row = square->row + (move_direction * 2);
-        if ((((WHITE == active_player) ? 1 : 6) == square->row)    // 1 : 6 == starting rows of white : black pawns
+        if ((((WHITE_i == active_player) ? 1 : 6) == square->row)    // 1 : 6 == starting rows of white : black pawns
            && (target_row >= 0)
            && (target_row < BOARD_ROWS)
            && (EMPTY == state->board[target_row][target_column].kind)
-           && (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
+           && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
             state->possible_moves_number++;
@@ -303,14 +303,14 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
             &&
               ((passive_player == state->board[target_row][target_column].color)  // regular capturing
             ||
-              ((NONE == state->board[target_row][target_column].color)            // en passant capturing
+              ((NONE_i == state->board[target_row][target_column].color)            // en passant capturing
             && (passive_player == state->board[square->row][target_column].color)
             && (PAWN == state->board[square->row][target_column].kind)
             && (state->last_move.to.row == square->row)
             && (state->last_move.to.column == target_column)
-            && (state->last_move.from.row == ((WHITE == passive_player) ? 1 : 6))))
+            && (state->last_move.from.row == ((WHITE_i == passive_player) ? 1 : 6))))
             &&
-               (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
+               (!in_check_after_move(state, (Move_i) {*square, (Square_i) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
             state->possible_moves_number++;
@@ -322,14 +322,14 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
             &&
               ((passive_player == state->board[target_row][target_column].color)  // regular capturing
             ||
-              ((NONE == state->board[target_row][target_column].color)            // en passant capturing
+              ((NONE_i == state->board[target_row][target_column].color)            // en passant capturing
             && (passive_player == state->board[square->row][target_column].color)
             && (PAWN == state->board[square->row][target_column].kind)
             && (state->last_move.to.row == square->row)
             && (state->last_move.to.column == target_column)
-            && (state->last_move.from.row == ((WHITE == passive_player) ? 1 : 6))))
+            && (state->last_move.from.row == ((WHITE_i == passive_player) ? 1 : 6))))
             &&
-               (!in_check_after_move(state, (Move) {*square, (Square) {target_row, target_column}})))
+               (!in_check_after_move(state, (Move_i) {*square, (Square_i) {target_row, target_column}})))
         {
             state->possible_moves[square->row][square->column][target_row][target_column] = true;
             state->possible_moves_number++;
@@ -342,9 +342,9 @@ void write_pawn_possible_moves(Game_state *state, Square *square)
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_knight_possible_moves(Game_state *state, Square *square)
+void write_knight_possible_moves(Game_state *state, Square_i *square)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
 
     // The row- and column-modifier arrays give the positions of candidate squares relative to the starting square.
     // When both arrays are subscripted with the same index and the values are added to the respective values of the starting square,
@@ -362,7 +362,7 @@ void write_knight_possible_moves(Game_state *state, Square *square)
          && (column >= 0)
          && (column < BOARD_COLUMNS)
          && (active_player != state->board[row][column].color)
-         && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+         && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             ++state->possible_moves_number;
@@ -375,9 +375,9 @@ void write_knight_possible_moves(Game_state *state, Square *square)
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_bishop_possible_moves(Game_state *state, Square *square)
+void write_bishop_possible_moves(Game_state *state, Square_i *square)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
 
     // upper-left
     int row;
@@ -388,7 +388,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -397,7 +397,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
     if ((row < BOARD_ROWS)
      && (column >= 0)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -410,7 +410,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -419,7 +419,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
     if ((row < BOARD_ROWS)
      && (column < BOARD_COLUMNS)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -432,7 +432,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -441,7 +441,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
     if ((row >= 0)
      && (column >= 0)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -454,7 +454,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -463,7 +463,7 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
     if ((row >= 0)
      && (column < BOARD_COLUMNS)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -475,9 +475,9 @@ void write_bishop_possible_moves(Game_state *state, Square *square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_rook_possible_moves(Game_state *state, Square *square)
+void write_rook_possible_moves(Game_state *state, Square_i *square)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
 
     // left
     int row = square->row;
@@ -487,7 +487,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -495,7 +495,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
     }
     if ((column >= 0)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -507,7 +507,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -515,7 +515,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
     }
     if ((column < BOARD_COLUMNS)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -528,7 +528,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -536,7 +536,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
     }
     if ((row < BOARD_ROWS)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -549,7 +549,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
         if (EMPTY != state->board[row][column].kind)
             break;
 
-        if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+        if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
         {
             state->possible_moves[square->row][square->column][row][column] = true;
             state->possible_moves_number++;
@@ -557,7 +557,7 @@ void write_rook_possible_moves(Game_state *state, Square *square)
     }
     if ((row >= 0)
      && (active_player != state->board[row][column].color)
-     && (!in_check_after_move(state, (Move) {*square, (Square) {row, column}})))
+     && (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}})))
     {
         state->possible_moves[square->row][square->column][row][column] = true;
         state->possible_moves_number++;
@@ -569,9 +569,9 @@ void write_rook_possible_moves(Game_state *state, Square *square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_king_possible_moves(Game_state *state, Square *square)
+void write_king_possible_moves(Game_state *state, Square_i *square)
 {
-    Color active_player = player_active(state);
+    Color_i active_player = player_active(state);
 
     // standard moves
     int row, column;
@@ -584,7 +584,7 @@ void write_king_possible_moves(Game_state *state, Square *square)
              || (row == square->row && column == square->column)
              || (column < 0 || column >= BOARD_COLUMNS))
                 continue;
-            else if (!in_check_after_move(state, (Move) {*square, (Square) {row, column}}))
+            else if (!in_check_after_move(state, (Move_i) {*square, (Square_i) {row, column}}))
             {
                 state->possible_moves[square->row][square->column][row][column] = true;
                 state->possible_moves_number++;
@@ -593,17 +593,17 @@ void write_king_possible_moves(Game_state *state, Square *square)
     }
 
     // castling
-    if ((WHITE == active_player)
-     && (!is_attacked_by(state, (Square) {0,4}, BLACK)))
+    if ((WHITE_i == active_player)
+     && (!is_attacked_by(state, (Square_i) {0,4}, BLACK_i)))
     {
         // kingside
         if ((true == state->castle_kngsde_legal_white)
          && (ROOK == state->board[0][7].kind)
-         && (WHITE == state->board[0][7].color)
+         && (WHITE_i == state->board[0][7].color)
          && (EMPTY == state->board[0][5].kind)
          && (EMPTY == state->board[0][6].kind)
-         && (!is_attacked_by(state, (Square) {0,6}, BLACK))
-         && (!is_attacked_by(state, (Square) {0,5}, BLACK)))
+         && (!is_attacked_by(state, (Square_i) {0,6}, BLACK_i))
+         && (!is_attacked_by(state, (Square_i) {0,5}, BLACK_i)))
         {
             state->possible_moves[square->row][square->column][0][6] = true;
             state->possible_moves_number++;
@@ -612,28 +612,28 @@ void write_king_possible_moves(Game_state *state, Square *square)
         // queenside
         if ((true == state->castle_qensde_legal_white)
          && (ROOK == state->board[0][0].kind)
-         && (WHITE == state->board[0][0].color)
+         && (WHITE_i == state->board[0][0].color)
          && (EMPTY == state->board[0][1].kind)
          && (EMPTY == state->board[0][2].kind)
          && (EMPTY == state->board[0][3].kind)
-         && (!is_attacked_by(state, (Square) {0,3}, BLACK))
-         && (!is_attacked_by(state, (Square) {0,2}, BLACK)))
+         && (!is_attacked_by(state, (Square_i) {0,3}, BLACK_i))
+         && (!is_attacked_by(state, (Square_i) {0,2}, BLACK_i)))
         {
             state->possible_moves[square->row][square->column][0][2] = true;
             state->possible_moves_number++;
         }
     }
-    else if ((BLACK == active_player)
-          && (!is_attacked_by(state, (Square) {7,4}, WHITE)))
+    else if ((BLACK_i == active_player)
+          && (!is_attacked_by(state, (Square_i) {7,4}, WHITE_i)))
     {
         // kingside
         if ((true == state->castle_kngsde_legal_black)
          && (ROOK == state->board[7][7].kind)
-         && (BLACK == state->board[7][7].color)
+         && (BLACK_i == state->board[7][7].color)
          && (EMPTY == state->board[7][5].kind)
          && (EMPTY == state->board[7][6].kind)
-         && (!is_attacked_by(state, (Square) {7,6}, WHITE))
-         && (!is_attacked_by(state, (Square) {7,5}, WHITE)))
+         && (!is_attacked_by(state, (Square_i) {7,6}, WHITE_i))
+         && (!is_attacked_by(state, (Square_i) {7,5}, WHITE_i)))
         {
             state->possible_moves[square->row][square->column][7][6] = true;
             state->possible_moves_number++;
@@ -642,12 +642,12 @@ void write_king_possible_moves(Game_state *state, Square *square)
         // queenside
         if ((true == state->castle_qensde_legal_black)
          && (ROOK == state->board[7][0].kind)
-         && (BLACK == state->board[7][0].color)
+         && (BLACK_i == state->board[7][0].color)
          && (EMPTY == state->board[7][1].kind)
          && (EMPTY == state->board[7][2].kind)
          && (EMPTY == state->board[7][3].kind)
-         && (!is_attacked_by(state, (Square) {7,3}, WHITE))
-         && (!is_attacked_by(state, (Square) {7,2}, WHITE)))
+         && (!is_attacked_by(state, (Square_i) {7,3}, WHITE_i))
+         && (!is_attacked_by(state, (Square_i) {7,2}, WHITE_i)))
         {
             state->possible_moves[square->row][square->column][7][2] = true;
             state->possible_moves_number++;
@@ -660,10 +660,10 @@ void write_king_possible_moves(Game_state *state, Square *square)
  *                      state would be in check after a potential   *
  *                      move.                                       *
  ********************************************************************/
-bool in_check_after_move(Game_state *state, Move move)
+bool in_check_after_move(Game_state *state, Move_i move)
 {
-    Color defending_player = player_active(state);
-    Color attacking_player = player_passive(state);
+    Color_i defending_player = player_active(state);
+    Color_i attacking_player = player_passive(state);
 
     // create new gamestate to play the move scenario
     Game_state new_state = *state;
@@ -673,12 +673,12 @@ bool in_check_after_move(Game_state *state, Move move)
      && (move.from.column != move.to.column)
      && (EMPTY == state->board[move.to.row][move.to.column].kind))
     {
-        new_state.board[move.from.row][move.to.column] = (Piece) {NONE, EMPTY};
+        new_state.board[move.from.row][move.to.column] = (Piece_i) {NONE_i, EMPTY};
     }
 
     // performing move (capturing happens through override)
     new_state.board[move.to.row][move.to.column] = new_state.board[move.from.row][move.from.column];
-    new_state.board[move.from.row][move.from.column] = (Piece) {NONE, EMPTY};
+    new_state.board[move.from.row][move.from.column] = (Piece_i) {NONE_i, EMPTY};
 
     // check for check
     if (KING == new_state.board[move.to.row][move.to.column].kind)
@@ -696,7 +696,7 @@ bool in_check_after_move(Game_state *state, Move move)
  *                 also could prove useful for the AI to plan       *
  *                 moves.                                           *
  ********************************************************************/
-bool is_attacked_by(Game_state *game_state, Square square, Color attacking_player)
+bool is_attacked_by(Game_state *game_state, Square_i square, Color_i attacking_player)
 {
     /* check left */
     int row = square.row;
@@ -855,7 +855,7 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
     }
 
     /* check pawn */
-    int pawn_row_modifier = (WHITE == attacking_player) ? -1 : 1;
+    int pawn_row_modifier = (WHITE_i == attacking_player) ? -1 : 1;
     if (square.row + pawn_row_modifier >= 0 || square.row + pawn_row_modifier < BOARD_ROWS)
     {
         if ((square.column - 1 >= 0)
@@ -871,11 +871,11 @@ bool is_attacked_by(Game_state *game_state, Square square, Color attacking_playe
 
     /* check en passant */
     if
-        (((game_state->last_move.from.row + ((WHITE == attacking_player) ? -2 : 2)) == game_state->last_move.to.row)
+        (((game_state->last_move.from.row + ((WHITE_i == attacking_player) ? -2 : 2)) == game_state->last_move.to.row)
       &&
           (PAWN == game_state->board[square.row][square.column].kind)
       &&
-          (((WHITE == attacking_player) ? BLACK : WHITE) == game_state->board[square.row][square.column].color)
+          (((WHITE_i == attacking_player) ? BLACK_i : WHITE_i) == game_state->board[square.row][square.column].color)
       &&
           (((PAWN == game_state->board[square.row][square.column - 1].kind)
         &&  (attacking_player == game_state->board[square.row][square.column - 1].color))

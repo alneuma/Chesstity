@@ -1,69 +1,96 @@
+/********************************************************************
+ * core_interface.h                                                 *
+ *                                                                  *
+ * The interface for other modules to communicate with the          *
+ * core-functionality. Communication happens largely through char   *
+ * and string variables. Which are meant to be easily               *
+ * understandable by the programmer.                                *
+ * empty square:        ' '                                         *
+ * white/black pawn:    'P'/'p'                                     *
+ * white/black knight:  'N'/'n'                                     *
+ * white/black bishop:  'B'/'b'                                     *
+ * white/black rook:    'R'/'r'                                     *
+ * white/black queen:   'Q'/'q'                                     *
+ * white/black king:    'K'/'k'                                     *
+ ********************************************************************/
 #ifndef CORE_INTERFACE_H
 #define CORE_INTERFACE_H
 
-#include "core_functions.h"
+#include <stdbool.h>
 
 typedef struct game *Game;
 
 typedef char Letter_piece;
-enum letter_piece
-{
-    LET_EMPTY = '.',
-    LET_WHITE_PAWN = 'P',
-    LET_WHITE_KNIGHT = 'N',
-    LET_WHITE_BISHOP = 'B',
-    LET_WHITE_ROOK = 'R',
-    LET_WHITE_QUEEN = 'Q',
-    LET_WHITE_KING = 'K', 
-    LET_BLACK_PAWN = 'p',
-    LET_BLACK_KNIGHT = 'n',
-    LET_BLACK_BISHOP = 'b',
-    LET_BLACK_ROOK = 'r',
-    LET_BLACK_QUEEN = 'q',
-    LET_BLACK_KING = 'k', 
-};
 
+typedef enum color {
+    NONE, WHITE, BLACK,
+} Color;
+
+typedef struct square {
+    int row;
+    int column;
+} Square;
+
+typedef struct move {
+    Square from;
+    Square to;
+} Move;
+
+/********************************************************************
+ * create_game: Creates a Game object, which is a linked list, with *
+ *              variables of type Game_state as nodes.              *
+ *              Returns NULL on failure.                            *
+ ********************************************************************/
 Game create_game(void);
 
+/********************************************************************
+ * duplicate_came: Returns a copy of game.                          *
+ *                 Returns NULL on failure.                         *
+ ********************************************************************/
+Game duplicate_game(Game game);
+
+/********************************************************************
+ * destroy_game: Destroys a Game object freeing all the used        *
+ *               memory.                                            *   
+ ********************************************************************/
 void destroy_game(Game game);
 
 /********************************************************************
- * board_from_string: Writes the board_state represented by         *
- *                    board_string into state->board.               *
- *                    board_string should be of the following       *
- *                    format:                                       *
- *                    Letter_piece board_string[] = "rnbqkbnr"      *
- *                                                  "pppppppp"      *
- *                                                  "........"      *
- *                                                  "........"      *
- *                                                  "........"      *
- *                                                  "........"      *
- *                                                  "PPPPPPPP"      *
- *                                                  "RNBQKBNR";     *
- *                    Here uppper case letters represent black      *
- *                    pieces, lower-case letters represent white    *
- *                    pieces and '*' character represent empty      *
- *                    squares.                                      *
- *                    Can be adjusted in chess_test_creater.h       *
- *                    (typedef Letter_piece).                       *
+ * move: returns different codes based
  ********************************************************************/
-void board_from_string(Game_state *state, Letter_piece *board_string);
+int move(Game game, Move move);
 
 /********************************************************************
- * letter_to_piece: Converts an int (Letter_piece) representation   *
- *                  of a piece which is used for writing            *
- *                  chess-debugging-scripts into the internally     *
- *                  used struct (Piece) representation of a piece   *
- *                  type.                                           *
+ * player_to_move: Returns the color of the player to move.         *
+ *                 Color can be NONE, WHITE or BLACK                *
  ********************************************************************/
-Piece letter_to_piece(Letter_piece letter);
+Color player_to_move(Game game);
 
 /********************************************************************
- * set_game_state: Takes a Game_state and sets it's values to       *
- *                 default testing value.                           *
- *                 Ignores last_move, king_white, king_black and    *
- *                 *previous_game_state.                            *
+ * pawn_upgradable: Checks if there is an upgradable pawn for the   *
+ *                  passive player (i.e. the one who just moved).   *
+ *                  Should be used to check if a graphical          *
+ *                  front-end should be called to pass it's input   *
+ *                  to upgrade_pawn().                              *
  ********************************************************************/
-void set_game_state(Game_state *state, Letter_piece *board);
+Square pawn_upgradable(Game game);
+
+/********************************************************************
+ * upgrade_pawn: Replaces the (only) upgradable pawn, by the        *
+ *               according piece.                                   *
+ ********************************************************************/
+bool upgrade_pawn(Game game, Letter_piece piece);
+
+/********************************************************************
+ * victory_state: returns different codes based
+ ********************************************************************/
+int victory_state(Game game);
+
+/********************************************************************
+ * current_board: Returns a pointer to a staticly stored            *
+ *                64-letter-string, representing the actual board.  *
+ *                To be passed to graphic-output.                   *
+ ********************************************************************/
+const Letter_piece *current_board(Game game);
 
 #endif

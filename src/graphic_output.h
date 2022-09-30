@@ -6,7 +6,7 @@
 /********************************************************************
  * piece_to_letter: Returns the letter associated with a piece.     *
  ********************************************************************/
-char piece_to_letter(Piece *piece);
+char piece_to_letter(Piece_i *piece);
 
 /********************************************************************
  * print_board: Prints game_state->board as an ascii chess-board.   *
