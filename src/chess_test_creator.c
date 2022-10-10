@@ -22,6 +22,23 @@ enum letter_piece_test_i
     BLACK_KING_test_i = 'k', 
 };
 
+static Piece_i test_letter_to_piece(const Letter_piece_test_i letter);
+
+// For encapsulation reasons this normally should only be declared in core_interface.c
+// It is declared here aswell to enable access_state which is important for testing
+struct game
+{
+    Game_state *current_state;
+};
+
+/********************************************************************
+ * access_state: Returns a pointer to the current_state of a Game.  *
+ ********************************************************************/
+Game_state *access_state(Game game)
+{
+    return game->current_state;
+}
+
 /********************************************************************
  * possible_moves_string: Retruns a pointer to a string displaying  *
  *                        the possible moves of saquare at state.   *
@@ -127,7 +144,7 @@ void set_test_game_state(Game_state *state)
 //    state->board[4][0] = (Piece_i) {WHITE_i,KING};
 //    state->king_white = (Square_i) {4,0};
 //    state->board[4][BOARD_ROWS-1] = (Piece_i) {BLACK_i,KING};
-//    state->king black = (Square_i) {4,BORAD_ROWS-1};
+//    state->king_black = (Square_i) {4,BOARD_ROWS-1};
 
     for (int i = 0; i < BOARD_ROWS; i++)
     {
@@ -144,22 +161,22 @@ void set_test_game_state(Game_state *state)
     }
 
     state->possible_moves_number = 0;
-
+//    update_possible_moves_game(state);
 //    struct game_state *previous_game_state;
 }
 
 /********************************************************************
- * letter_to_piece: Converts an int (Letter_piece) representation   *
- *                  of a piece which is used for writing            *
- *                  chess-debugging-scripts into the internally     *
- *                  used struct (Piece_i) representation of a piece *
- *                  type.                                           *
+ * test_letter_to_piece: Converts an int (Letter_piece)             *
+ *                       representation of a piece which is used    *
+ *                       for writing chess-debugging-scripts into   *
+ *                       the internally used struct (Piece_i)       *
+ *                       representation of a piece type.            *
  ********************************************************************/
-static Piece_i letter_to_piece(const Letter_piece_test_i letter)
+static Piece_i test_letter_to_piece(const Letter_piece_test_i letter)
 {
     switch (letter)
     {
-        case NONE_EMPTY_test_i:         return (Piece_i) {NONE_i, EMPTY};
+        case NONE_EMPTY_test_i:    return (Piece_i) {NONE_i, EMPTY};
         case WHITE_PAWN_test_i:    return (Piece_i) {WHITE_i, PAWN};
         case WHITE_KNIGHT_test_i:  return (Piece_i) {WHITE_i, KNIGHT};
         case WHITE_BISHOP_test_i:  return (Piece_i) {WHITE_i, BISHOP};
@@ -213,6 +230,6 @@ void set_board(Game_state *state, const Letter_piece_test_i *board_string)
         else if (BLACK_KING_test_i == *p)
             state->king_black = (Square_i) {i,j};
         
-        state->board[i][j] = letter_to_piece(*p++);
+        state->board[i][j] = test_letter_to_piece(*p++);
     }
 }

@@ -1,3 +1,15 @@
+/* IMPORTANT:
+ * For tests to work #define DEBUG in the following files:
+ * core_functions.c
+ * core_interface.c
+ * core_interface.h
+ */
+
+/* options (uncomment to activate) */
+//#define TEST_CORE_FUNCTIONS_H
+#define TEST_CORE_INTERFACE_H
+
+/* include directives */
 #include "test-framework/unity/unity.h"
 #include "test-framework/unity/unity_chess_extension.h"
 
@@ -5,6 +17,7 @@
 #include "graphic_output.h"
 #include "core_interface.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 /* unit to be tested */
 #include "core_functions.h"
@@ -15,6 +28,7 @@ void tearDown (void) {} /* Is run after every test, put unit clean-up calls here
 //////////////////////
 // core_functions.h //
 //////////////////////
+#ifdef TEST_CORE_FUNCTIONS_H
 void test_board(void)
 {
     Game_state state;
@@ -117,6 +131,20 @@ void test_active_player_black(void)
     Game_state state;
     state.move_number = 2;
     TEST_ASSERT_TRUE(WHITE_i != player_active(&state));
+}
+
+void test_passive_player_white(void)
+{
+    Game_state state;
+    state.move_number = 2;
+    TEST_ASSERT_TRUE(WHITE_i == player_passive(&state));
+}
+
+void test_passive_player_black(void)
+{
+    Game_state state;
+    state.move_number = 1;
+    TEST_ASSERT_TRUE(WHITE_i != player_passive(&state));
 }
 
 void test_set_test_game_state(void)
@@ -914,7 +942,43 @@ void test_board_string(void)
                                    "........", board_string(&state));
 }
 
-void test_apply_move_01(void)
+void test_apply_move_01_move_number(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "B..k...."
+                      ".r...P.."
+                      "........"
+                      "P...B..."
+                      "Kn......"
+                      ".p......"
+                      "Q......."
+                      "........");
+    state.king_white = (Square_i) {3,0};
+    state.king_black = (Square_i) {7,3};
+    Game_state *new_state = apply_move(&state, (Move_i) {(Square_i) {1,0}, (Square_i) {1,4}});
+    TEST_ASSERT_TRUE(2 == new_state->move_number);
+}
+
+void test_apply_move_02_player_active(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "B..k...."
+                      ".r...P.."
+                      "........"
+                      "P...B..."
+                      "Kn......"
+                      ".p......"
+                      "Q......."
+                      "........");
+    state.king_white = (Square_i) {3,0};
+    state.king_black = (Square_i) {7,3};
+    Game_state *new_state = apply_move(&state, (Move_i) {(Square_i) {1,0}, (Square_i) {1,4}});
+    TEST_ASSERT_TRUE(BLACK_i == player_active(new_state));
+}
+
+void test_apply_move_03_board(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -939,7 +1003,7 @@ void test_apply_move_01(void)
                                    "........", board_string(new_state));
 }
 
-void test_apply_move_02_uneventful_moves_add(void)
+void test_apply_move_04_uneventful_moves_add(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -957,7 +1021,7 @@ void test_apply_move_02_uneventful_moves_add(void)
     TEST_ASSERT_TRUE(state.uneventful_moves + 1 == new_state->uneventful_moves);
 }
 
-void test_apply_move_03_capturing(void)
+void test_apply_move_05_capturing(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -982,7 +1046,7 @@ void test_apply_move_03_capturing(void)
                                    "........", board_string(new_state));
 }
 
-void test_apply_move_04_uneventful_moves_reset(void)
+void test_apply_move_06_uneventful_moves_reset(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1001,7 +1065,7 @@ void test_apply_move_04_uneventful_moves_reset(void)
     TEST_ASSERT_TRUE(0 == new_state->uneventful_moves);
 }
 
-void test_apply_move_05_pawn_upgradable(void)
+void test_apply_move_07_pawn_upgradable(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1019,7 +1083,7 @@ void test_apply_move_05_pawn_upgradable(void)
     TEST_ASSERT_TRUE(true == new_state->pawn_upgradable);
 }
 
-void test_apply_move_06_castling_01(void)
+void test_apply_move_08_castling_01(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1044,7 +1108,7 @@ void test_apply_move_06_castling_01(void)
                                    "R....RK.", board_string(new_state));
 }
 
-void test_apply_move_07_castling_02(void)
+void test_apply_move_09_castling_02(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1069,7 +1133,7 @@ void test_apply_move_07_castling_02(void)
                                    "..KR...R", board_string(new_state));
 }
 
-void test_apply_move_08_castling_03(void)
+void test_apply_move_10_castling_03(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1095,7 +1159,7 @@ void test_apply_move_08_castling_03(void)
                                    "R...K..R", board_string(new_state));
 }
 
-void test_apply_move_09_castling_04(void)
+void test_apply_move_11_castling_04(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1121,7 +1185,7 @@ void test_apply_move_09_castling_04(void)
                                    "R...K..R", board_string(new_state));
 }
 
-void test_apply_move_10_castling_legality_01(void)
+void test_apply_move_12_castling_legality_01(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1140,7 +1204,7 @@ void test_apply_move_10_castling_legality_01(void)
                   && (false == new_state->castle_qensde_legal_white));
 }
 
-void test_apply_move_11_castling_legality_02(void)
+void test_apply_move_13_castling_legality_02(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1159,7 +1223,7 @@ void test_apply_move_11_castling_legality_02(void)
                   && (true == new_state->castle_qensde_legal_white));
 }
 
-void test_apply_move_12_castling_legality_03(void)
+void test_apply_move_14_castling_legality_03(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1178,7 +1242,7 @@ void test_apply_move_12_castling_legality_03(void)
                   && (false == new_state->castle_qensde_legal_white));
 }
 
-void test_apply_move_13_castling_legality_04(void)
+void test_apply_move_15_castling_legality_04(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1198,7 +1262,7 @@ void test_apply_move_13_castling_legality_04(void)
                   && (false == new_state->castle_qensde_legal_black));
 }
 
-void test_apply_move_14_castling_legality_05(void)
+void test_apply_move_16_castling_legality_05(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1218,7 +1282,7 @@ void test_apply_move_14_castling_legality_05(void)
                   && (false == new_state->castle_qensde_legal_black));
 }
 
-void test_apply_move_15_castling_legality_06(void)
+void test_apply_move_17_castling_legality_06(void)
 {
     Game_state state;
     set_test_game_state(&state);    // active_player == WHITE_i
@@ -1238,12 +1302,376 @@ void test_apply_move_15_castling_legality_06(void)
                   && (true == new_state->castle_qensde_legal_black));
 }
 
+void test_apply_move_18_possible_moves_number(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    state.move_number = 2;     // active_player == BLACK_i
+    set_board(&state, "r...k..r"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "R...K..R");
+    state.king_white = (Square_i) {0,4};
+    state.king_black = (Square_i) {7,4};
+    Game_state *new_state = apply_move(&state, (Move_i) {(Square_i) {7,7}, (Square_i) {7,6}});
+    TEST_ASSERT_TRUE(25 == new_state->possible_moves_number);
+
+    free(new_state);
+}
+
+void test_board_repeated_01(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "rnbqkbnr"
+                      "pppppppp"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "PPPPPPPP"
+                      "RNBQKBNR");
+    state.king_white = (Square_i) {0,4};
+    state.king_black = (Square_i) {7,4};
+    TEST_ASSERT_TRUE(1 == state.board_occurences);
+}
+
+void test_board_repeated_02(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "rnbqkbnr"
+                      "pppppppp"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "PPPPPPPP"
+                      "RNBQKBNR");
+    state.king_white = (Square_i) {0,4};
+    state.king_black = (Square_i) {7,4};
+    Game_state *new_state = apply_move(&state, (Move_i) {(Square_i) {0,1}, (Square_i) {2,0}});
+    TEST_ASSERT_TRUE(1 == new_state->board_occurences);
+
+    free(new_state);
+}
+
+void test_board_repeated_03(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "rnbqkbnr"
+                      "pppppppp"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "PPPPPPPP"
+                      "RNBQKBNR");
+    state.king_white = (Square_i) {0,4};
+    state.king_black = (Square_i) {7,4};
+    update_possible_moves_game(&state);
+    //printf("move_number = %d\npossible_moves_number = %d\n", state.move_number, state.possible_moves_number);
+    Game_state *new_state_1 = apply_move(&state, (Move_i) {(Square_i) {0,1}, (Square_i) {2,0}});
+    Game_state *new_state_2 = apply_move(new_state_1, (Move_i) {(Square_i) {7,1}, (Square_i) {5,0}});
+    Game_state *new_state_3 = apply_move(new_state_2, (Move_i) {(Square_i) {2,0}, (Square_i) {0,1}});
+    Game_state *new_state_4 = apply_move(new_state_3, (Move_i) {(Square_i) {5,0}, (Square_i) {7,1}});
+    //printf("move_number = %d\npossible_moves_number = %d\n", new_state_4->move_number, new_state_4->possible_moves_number);
+    TEST_ASSERT_TRUE(2 == new_state_4->board_occurences);
+
+    free(new_state_4);
+    free(new_state_3);
+    free(new_state_2);
+    free(new_state_1);
+}
+
+void test_board_repeated_04(void)
+{
+    Game_state state;
+    set_test_game_state(&state);    // active_player == WHITE_i
+    set_board(&state, "rnbqkbnr"
+                      "pppppppp"
+                      "........"
+                      "........"
+                      "........"
+                      "........"
+                      "PPPPPPPP"
+                      "RNBQKBNR");
+    state.king_white = (Square_i) {0,4};
+    state.king_black = (Square_i) {7,4};
+    update_possible_moves_game(&state);
+    //printf("move_number = %d\npossible_moves_number = %d\n", state.move_number, state.possible_moves_number);
+    Game_state *new_state_1 = apply_move(&state, (Move_i) {(Square_i) {0,1}, (Square_i) {2,0}});
+    Game_state *new_state_2 = apply_move(new_state_1, (Move_i) {(Square_i) {7,1}, (Square_i) {5,0}});
+    Game_state *new_state_3 = apply_move(new_state_2, (Move_i) {(Square_i) {2,0}, (Square_i) {0,1}});
+    Game_state *new_state_4 = apply_move(new_state_3, (Move_i) {(Square_i) {5,0}, (Square_i) {7,1}});
+    Game_state *new_state_5 = apply_move(new_state_4, (Move_i) {(Square_i) {1,4}, (Square_i) {3,4}});
+    //printf("move_number = %d\npossible_moves_number = %d\n", new_state_4->move_number, new_state_4->possible_moves_number);
+    TEST_ASSERT_TRUE(1 == new_state_5->board_occurences);
+
+    free(new_state_5);
+    free(new_state_4);
+    free(new_state_3);
+    free(new_state_2);
+    free(new_state_1);
+}
+#endif
+
+//////////////////////
+// core_interface.h //
+//////////////////////
+#ifdef TEST_CORE_INTERFACE_H
+void test_move_piece_01(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+
+    TEST_ASSERT_TRUE(move_piece(game, move));
+
+    destroy_game(game);
+}
+
+void test_move_piece_02(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {0,2}, (Square) {1,1} };
+
+    TEST_ASSERT_TRUE(!move_piece(game, move));
+
+    destroy_game(game);
+}
+
+void test_move_piece_03(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(game, move);
+
+    TEST_ASSERT_TRUE(WHITE_i == access_state(game)->board[3][3].color);
+
+    destroy_game(game);
+}
+
+void test_move_piece_04(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(game, move);
+
+    TEST_ASSERT_TRUE(NONE_i == access_state(game)->board[1][3].color);
+
+    destroy_game(game);
+}
+
+void test_move_piece_05(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(game, move);
+
+    TEST_ASSERT_TRUE(PAWN == access_state(game)->board[3][3].kind);
+
+    destroy_game(game);
+}
+
+void test_move_piece_06(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(game, move);
+
+    TEST_ASSERT_TRUE(EMPTY == access_state(game)->board[1][3].kind);
+
+    destroy_game(game);
+}
+
+void test_player_to_move_01(void)
+{
+    Game game = create_game();
+
+    TEST_ASSERT_TRUE(WHITE == player_to_move(game));
+
+    destroy_game(game);
+}
+
+void test_player_to_move_02(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(game, move);
+
+    TEST_ASSERT_TRUE(BLACK == player_to_move(game));
+
+    destroy_game(game);
+}
+
+void test_current_board_01(void)
+{
+    Game game = create_game();
+
+    TEST_ASSERT_EQUAL_STRING_CHESS("rnbqkbnr"
+                                   "pppppppp"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "PPPPPPPP"
+                                   "RNBQKBNR", current_board(game));
+
+    destroy_game(game);
+}
+
+void test_current_board_02(void)
+{
+    Game game = create_game();
+    Move move = { (Square) {0,1}, (Square) {2,2} };
+    move_piece(game, move);
+
+    TEST_ASSERT_EQUAL_STRING_CHESS("rnbqkbnr"
+                                   "pppppppp"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "..N....."
+                                   "PPPPPPPP"
+                                   "R.BQKBNR", current_board(game));
+
+    destroy_game(game);
+}
+
+void test_claim_remis_move_01(void)
+{
+    Game game = create_game();
+    move_piece(game, (Move) { (Square) {0,1}, (Square) {2,2} });
+    move_piece(game, (Move) { (Square) {7,1}, (Square) {5,2} });
+    move_piece(game, (Move) { (Square) {2,2}, (Square) {0,1} });
+    move_piece(game, (Move) { (Square) {5,2}, (Square) {7,1} });
+    move_piece(game, (Move) { (Square) {0,1}, (Square) {2,2} });
+    move_piece(game, (Move) { (Square) {7,1}, (Square) {5,2} });
+    move_piece(game, (Move) { (Square) {2,2}, (Square) {0,1} });
+
+    TEST_ASSERT_TRUE(claim_remis_move(game, (Move) { (Square) {5,2}, (Square) {7,1} }));
+
+    destroy_game(game);
+}
+
+void test_claim_remis_move_02(void)
+{
+    Game game = create_game();
+    move_piece(game, (Move) { (Square) {0,1}, (Square) {2,2} });
+    move_piece(game, (Move) { (Square) {7,1}, (Square) {5,2} });
+    move_piece(game, (Move) { (Square) {2,2}, (Square) {0,1} });
+    move_piece(game, (Move) { (Square) {5,2}, (Square) {7,1} });
+    move_piece(game, (Move) { (Square) {0,1}, (Square) {2,2} });
+
+    TEST_ASSERT_TRUE(!claim_remis_move(game, (Move) { (Square) {7,1}, (Square) {5,2} }));
+
+    destroy_game(game);
+}
+
+void test_duplicate_game_01(void)
+{
+    Game original_game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(original_game, move);
+
+    Game game_duplicate = duplicate_game(original_game);
+
+    TEST_ASSERT_EQUAL_STRING_CHESS(board_string(access_state(original_game)), board_string(access_state(game_duplicate)));
+
+    destroy_game(game_duplicate);
+    destroy_game(original_game);
+}
+
+void test_duplicate_game_02(void)
+{
+    Game original_game = create_game();
+    Move move = { (Square) {1,3}, (Square) {3,3} };
+    move_piece(original_game, move);
+
+    Game game_duplicate = duplicate_game(original_game);
+
+    TEST_ASSERT_TRUE(access_state(original_game)->possible_moves_number == access_state(game_duplicate)->possible_moves_number);
+
+    destroy_game(game_duplicate);
+    destroy_game(original_game);
+}
+
+void test_pawn_upgradable_01(void)
+{
+    Game game = create_game();
+    access_state(game)->move_number = 1;
+    set_game_state(access_state(game), "k......."
+                                       "....P..."
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "K.......");
+    move_piece(game, (Move) {(Square) {6,4}, (Square) {7,4}});
+    TEST_ASSERT_TRUE((7 == pawn_upgradable(game).row) && (4 == pawn_upgradable(game).column));
+
+    free(game);
+}
+
+void test_pawn_upgradable_02(void)
+{
+    Game game = create_game();
+    access_state(game)->move_number = 1;
+    set_game_state(access_state(game), "k......."
+                                       "....P..."
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "K.......");
+    move_piece(game, (Move) {(Square) {6,4}, (Square) {7,4}});
+    move_piece(game, (Move) {(Square) {7,0}, (Square) {6,0}});
+    move_piece(game, (Move) {(Square) {0,0}, (Square) {1,0}});
+    TEST_ASSERT_TRUE((-1 == pawn_upgradable(game).row) && (-1 == pawn_upgradable(game).column));
+
+    free(game);
+}
+
+void test_upgrade_pawn_01(void)
+{
+    Game game = create_game();
+    access_state(game)->move_number = 1;
+    set_game_state(access_state(game), "k......."
+                                       "....P..."
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "........"
+                                       "K.......");
+    move_piece(game, (Move) {(Square) {6,4}, (Square) {7,4}});
+    upgrade_pawn(game, 'Q');
+    TEST_ASSERT_EQUAL_STRING_CHESS("k...Q..."
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "........"
+                                   "K.......", board_string(access_state(game)));
+
+    free(game);
+}
+#endif
 
 int main(void)
 {
     UNITY_BEGIN();
 
     // core_functions.h
+    #ifdef TEST_CORE_FUNCTIONS_H
     RUN_TEST(test_board);
     RUN_TEST(test_is_attacked_by_rook);
     RUN_TEST(test_is_attacked_by_bishop);
@@ -1253,6 +1681,8 @@ int main(void)
     RUN_TEST(test_is_king_square_black);
     RUN_TEST(test_active_player_white);
     RUN_TEST(test_active_player_black);
+    RUN_TEST(test_passive_player_white);
+    RUN_TEST(test_passive_player_black);
     RUN_TEST(test_set_test_game_state);
     RUN_TEST(test_is_attacked_by);
     RUN_TEST(test_king_square);
@@ -1286,21 +1716,50 @@ int main(void)
     RUN_TEST(test_update_possible_moves_game_10);
     RUN_TEST(test_update_possible_moves_game_11);
     RUN_TEST(test_board_string);
-    RUN_TEST(test_apply_move_01);
-    RUN_TEST(test_apply_move_02_uneventful_moves_add);
-    RUN_TEST(test_apply_move_03_capturing);
-    RUN_TEST(test_apply_move_04_uneventful_moves_reset);
-    RUN_TEST(test_apply_move_05_pawn_upgradable);
-    RUN_TEST(test_apply_move_06_castling_01);
-    RUN_TEST(test_apply_move_07_castling_02);
-    RUN_TEST(test_apply_move_08_castling_03);
-    RUN_TEST(test_apply_move_09_castling_04);
-    RUN_TEST(test_apply_move_10_castling_legality_01);
-    RUN_TEST(test_apply_move_11_castling_legality_02);
-    RUN_TEST(test_apply_move_12_castling_legality_03);
-    RUN_TEST(test_apply_move_13_castling_legality_04);
-    RUN_TEST(test_apply_move_14_castling_legality_05);
-    RUN_TEST(test_apply_move_15_castling_legality_06);
+    RUN_TEST(test_apply_move_01_move_number);
+    RUN_TEST(test_apply_move_02_player_active);
+    RUN_TEST(test_apply_move_03_board);
+    RUN_TEST(test_apply_move_04_uneventful_moves_add);
+    RUN_TEST(test_apply_move_05_capturing);
+    RUN_TEST(test_apply_move_06_uneventful_moves_reset);
+    RUN_TEST(test_apply_move_07_pawn_upgradable);
+    RUN_TEST(test_apply_move_08_castling_01);
+    RUN_TEST(test_apply_move_09_castling_02);
+    RUN_TEST(test_apply_move_10_castling_03);
+    RUN_TEST(test_apply_move_11_castling_04);
+    RUN_TEST(test_apply_move_12_castling_legality_01);
+    RUN_TEST(test_apply_move_13_castling_legality_02);
+    RUN_TEST(test_apply_move_14_castling_legality_03);
+    RUN_TEST(test_apply_move_15_castling_legality_04);
+    RUN_TEST(test_apply_move_16_castling_legality_05);
+    RUN_TEST(test_apply_move_17_castling_legality_06);
+    RUN_TEST(test_apply_move_18_possible_moves_number);
+    RUN_TEST(test_board_repeated_01);
+    RUN_TEST(test_board_repeated_02);
+    RUN_TEST(test_board_repeated_03);
+    RUN_TEST(test_board_repeated_04);
+    #endif
+
+    // core_interface.h
+    #ifdef TEST_CORE_INTERFACE_H
+    RUN_TEST(test_move_piece_01);
+    RUN_TEST(test_move_piece_02);
+    RUN_TEST(test_move_piece_03);
+    RUN_TEST(test_move_piece_04);
+    RUN_TEST(test_move_piece_05);
+    RUN_TEST(test_move_piece_06);
+    RUN_TEST(test_player_to_move_01);
+    RUN_TEST(test_player_to_move_02);
+    RUN_TEST(test_current_board_01);
+    RUN_TEST(test_current_board_02);
+    RUN_TEST(test_claim_remis_move_01);
+    RUN_TEST(test_claim_remis_move_02);
+    RUN_TEST(test_duplicate_game_01);
+    RUN_TEST(test_duplicate_game_02);
+    RUN_TEST(test_pawn_upgradable_01);
+    RUN_TEST(test_pawn_upgradable_02);
+    RUN_TEST(test_upgrade_pawn_01);
+    #endif
 
     return UNITY_END();
 }

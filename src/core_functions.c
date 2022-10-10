@@ -1,3 +1,11 @@
+// settings to enable debugging
+#define DEBUG
+#ifndef DEBUG
+#define PRIVATE static
+#else
+#define PRIVATE
+#endif
+
 #include "core_functions.h"
 #include <stdio.h>
 #include <stdbool.h>
@@ -263,7 +271,7 @@ void write_possible_moves_square(Game_state *state, Square_i square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumption.            *
  ********************************************************************/
-void write_pawn_possible_moves(Game_state *state, Square_i *square)
+PRIVATE inline void write_pawn_possible_moves(Game_state *state, Square_i *square)
 {
     Color_i active_player = player_active(state);
     Color_i passive_player = (WHITE_i == active_player) ? BLACK_i : WHITE_i;
@@ -342,7 +350,7 @@ void write_pawn_possible_moves(Game_state *state, Square_i *square)
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_knight_possible_moves(Game_state *state, Square_i *square)
+PRIVATE inline void write_knight_possible_moves(Game_state *state, Square_i *square)
 {
     Color_i active_player = player_active(state);
 
@@ -375,7 +383,7 @@ void write_knight_possible_moves(Game_state *state, Square_i *square)
  *                              write_possible_moves_square().      *
  *                              Makes the same assumptions.         *
  ********************************************************************/
-void write_bishop_possible_moves(Game_state *state, Square_i *square)
+PRIVATE void write_bishop_possible_moves(Game_state *state, Square_i *square)
 {
     Color_i active_player = player_active(state);
 
@@ -475,7 +483,7 @@ void write_bishop_possible_moves(Game_state *state, Square_i *square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_rook_possible_moves(Game_state *state, Square_i *square)
+PRIVATE void write_rook_possible_moves(Game_state *state, Square_i *square)
 {
     Color_i active_player = player_active(state);
 
@@ -569,7 +577,7 @@ void write_rook_possible_moves(Game_state *state, Square_i *square)
  *                            write_possible_moves_square().        *
  *                            Makes the same assumptions.           *
  ********************************************************************/
-void write_king_possible_moves(Game_state *state, Square_i *square)
+PRIVATE inline void write_king_possible_moves(Game_state *state, Square_i *square)
 {
     Color_i active_player = player_active(state);
 

@@ -12,6 +12,11 @@
 typedef char Letter_piece_test_i;
 
 /********************************************************************
+ * access_state: Returns a pointer to the current_state of a Game.  *
+ ********************************************************************/
+Game_state *access_state(Game game);
+
+/********************************************************************
  * possible_moves_string: Retruns a pointer to a string displaying  *
  *                        the possible moves of saquare at state.   *
  *                        The string is staticly stored inside the  *

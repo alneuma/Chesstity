@@ -13,6 +13,9 @@
  * white/black queen:   'Q'/'q'                                     *
  * white/black king:    'K'/'k'                                     *
  ********************************************************************/
+// settings to enable debugging
+#define DEBUG
+
 #ifndef CORE_INTERFACE_H
 #define CORE_INTERFACE_H
 
@@ -36,35 +39,62 @@ typedef struct move {
     Square to;
 } Move;
 
+#ifdef DEBUG
+void set_game_state(Game_state *state, const Letter_piece *board);
+enum letter_piece
+{
+    NONE_EMPTY = '.',
+    WHITE_PAWN = 'P',
+    WHITE_KNIGHT = 'N',
+    WHITE_BISHOP = 'B',
+    WHITE_ROOK = 'R',
+    WHITE_QUEEN = 'Q',
+    WHITE_KING = 'K', 
+    BLACK_PAWN = 'p',
+    BLACK_KNIGHT = 'n',
+    BLACK_BISHOP = 'b',
+    BLACK_ROOK = 'r',
+    BLACK_QUEEN = 'q',
+    BLACK_KING = 'k', 
+};
+#endif
+
 /********************************************************************
- * create_game: Creates a Game object, which is a linked list, with *
- *              variables of type Game_state as nodes.              *
+ * create_game: Creates a Game object.                              *
  *              Returns NULL on failure.                            *
  ********************************************************************/
 Game create_game(void);
 
 /********************************************************************
- * duplicate_came: Returns a copy of game.                          *
- *                 Returns NULL on failure.                         *
- ********************************************************************/
-Game duplicate_game(Game game);
-
-/********************************************************************
- * destroy_game: Destroys a Game object freeing all the used        *
- *               memory.                                            *   
+ * destroy_game: Destroys a Game object                             *
  ********************************************************************/
 void destroy_game(Game game);
 
 /********************************************************************
- * move: returns different codes based
+ * duplicate_came: Returns a copy of game.                          *
+ *                 Returns NULL on failure.                         *
  ********************************************************************/
-int move(Game game, Move move);
+Game duplicate_game(const Game game);
+
+/********************************************************************
+ * move_piece: returns different codes based                        *
+ *              true = normal move; success                         *
+ *             false = move illegal                                 *
+ ********************************************************************/
+bool move_piece(Game game, const Move move);
+
+/********************************************************************
+ * claim_remis_move: Returns true if move with remis claim will     *
+ *                   lead to remis.                                 *
+ *                   Otherwise returns false.                       *
+ ********************************************************************/
+bool claim_remis_move(const Game game, const Move move);
 
 /********************************************************************
  * player_to_move: Returns the color of the player to move.         *
  *                 Color can be NONE, WHITE or BLACK                *
  ********************************************************************/
-Color player_to_move(Game game);
+Color player_to_move(const Game game);
 
 /********************************************************************
  * pawn_upgradable: Checks if there is an upgradable pawn for the   *
@@ -73,18 +103,18 @@ Color player_to_move(Game game);
  *                  front-end should be called to pass it's input   *
  *                  to upgrade_pawn().                              *
  ********************************************************************/
-Square pawn_upgradable(Game game);
+Square pawn_upgradable(const Game game);
 
 /********************************************************************
  * upgrade_pawn: Replaces the (only) upgradable pawn, by the        *
  *               according piece.                                   *
  ********************************************************************/
-bool upgrade_pawn(Game game, Letter_piece piece);
+void upgrade_pawn(Game game, Letter_piece piece);
 
 /********************************************************************
  * victory_state: returns different codes based
  ********************************************************************/
-int victory_state(Game game);
+int victory_state(const Game game);
 
 /********************************************************************
  * current_board: Returns a pointer to a staticly stored            *

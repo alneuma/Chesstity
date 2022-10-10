@@ -1,3 +1,11 @@
+// settings to enable debugging
+#define DEBUG
+#ifndef DEBUG
+#define PRIVATE static
+#else
+#define PRIVATE
+#endif
+
 #include "core_functions.h"
 #include "core_interface.h"
 #include <stdlib.h>
@@ -13,6 +21,8 @@
                        "PPPPPPPP"   \
                        "RNBQKBNR"
 
+#ifndef DEBUG
+// when DEBUG is defined in core_interface.h letter_piece will be defined there
 enum letter_piece
 {
     NONE_EMPTY = '.',
@@ -29,14 +39,17 @@ enum letter_piece
     BLACK_QUEEN = 'q',
     BLACK_KING = 'k', 
 };
+#endif
 
 struct game
 {
     Game_state *current_state;
 };
 
-static void set_game_state(Game_state *state, const Letter_piece *board);
-static Piece_i letter_to_piece(const Letter_piece letter);
+PRIVATE void board_from_string(Game_state *state, const Letter_piece *board_string);
+PRIVATE void set_game_state(Game_state *state, const Letter_piece *board);
+PRIVATE Piece_i letter_to_piece(const Letter_piece letter);
+PRIVATE Letter_piece piece_to_letter_interf(const Piece_i *piece);
 
 /********************************************************************
  * create_game: Creates a Game object, which is a linked list, with *
@@ -47,14 +60,14 @@ Game create_game(void)
     Game new_game = malloc(sizeof(new_game));
     if (NULL == new_game)
     {
-        printf("error: %s: memoryallocation for new game failed", __func__);
+        printf("error: %s: memory-allocation for new game failed", __func__);
         exit(EXIT_FAILURE);
     }
 
     Game_state *beg_state = malloc(sizeof(*beg_state));
     if (NULL == beg_state)
     {
-        printf("error: %s: memoryallocation for new game failed", __func__);
+        printf("error: %s: memory-allocation for new game failed", __func__);
         exit(EXIT_FAILURE);
     }
 
@@ -71,7 +84,7 @@ Game create_game(void)
  ********************************************************************/
 void destroy_game(Game game)
 {
-    Game_state *temp;
+    Game_state *temp = NULL;
 
     while (NULL != game->current_state->previous_state)
     {
@@ -82,6 +95,176 @@ void destroy_game(Game game)
     free(game->current_state);
     free(game);
 }
+
+/********************************************************************
+ * duplicate_game: Returns a copy of game.                          *
+ *                 Returns NULL on failure.                         *
+ ********************************************************************/
+Game duplicate_game(Game original_game)
+{
+    Game duplicate_game = malloc(sizeof(duplicate_game));
+    if (NULL == duplicate_game)
+    {
+        printf("error: %s: memory-allocation for duplicate game failed", __func__);
+        exit(EXIT_FAILURE);
+    }
+
+    Game_state *original_state = original_game->current_state;
+
+    Game_state *duplicate_state = malloc(sizeof(*duplicate_state));
+    if (NULL == duplicate_state)
+    {
+        printf("error: %s: memory-allocation for duplicate gamestate failed", __func__);
+        exit(EXIT_FAILURE);
+    }
+    *duplicate_state = *original_state;
+
+    duplicate_game->current_state = duplicate_state;
+
+    while (NULL != original_state->previous_state)
+    {
+        original_state = original_state->previous_state;
+
+        duplicate_state->previous_state = malloc(sizeof(*duplicate_state->previous_state));
+        if (NULL == duplicate_state->previous_state)
+        {
+            printf("error: %s: memory-allocation for duplicate gamestate failed", __func__);
+            exit(EXIT_FAILURE);
+        }
+        *duplicate_state->previous_state = *original_state;
+        duplicate_state = duplicate_state->previous_state;
+    }
+    duplicate_state->previous_state = NULL;
+
+    return duplicate_game;
+}
+
+/********************************************************************
+ * move_piece: returns different codes based                        *
+ *              true = normal move; success                         *
+ *             false = move illegal                                 *
+ ********************************************************************/
+bool move_piece(Game game, const Move move)
+{
+    if (game->current_state->possible_moves[move.from.row][move.from.column][move.to.row][move.to.column])
+    {
+        Game_state *new_state = apply_move(game->current_state,
+                                          (Move_i) { (Square_i) {move.from.row, move.from.column}, (Square_i) {move.to.row, move.to.column} });
+        if (NULL == new_state)
+        {
+            printf("error: %s: memory-allocation failed; aborting\n", __func__);
+            exit(EXIT_FAILURE);
+        }
+        game->current_state = new_state;
+        return true;
+    }
+
+    return false;
+}
+
+/********************************************************************
+ * claim_remis_move: Returns true if move with remis claim will     *
+ *                   lead to remis by threefold-repetition-rule.    *
+ *                   Otherwise returns false.                       *
+ ********************************************************************/
+bool claim_remis_move(Game game, Move move)
+{
+    Game_state *remis_state = apply_move(game->current_state, (Move_i) {
+                                            (Square_i) {move.from.row, move.from.column},
+                                            (Square_i) {move.to.row, move.to.column}}); 
+    if (NULL == remis_state)
+    {
+        printf("error: %s: memory-allocation failed; aborting\n", __func__);
+        exit(EXIT_FAILURE);
+    }
+
+    if (3 <= remis_state->board_occurences)
+    {
+        free(remis_state);
+        return true;
+    }
+
+    return false;
+    free(remis_state);
+}
+
+/********************************************************************
+ * player_to_move: Returns the color of the player to move.         *
+ *                 Color can be NONE, WHITE or BLACK                *
+ ********************************************************************/
+Color player_to_move(const Game game)
+{
+    if (WHITE_i == player_active(game->current_state))
+        return WHITE;
+    return BLACK;
+}
+
+/********************************************************************
+ * pawn_upgradable: Checks if there is an upgradable pawn for the   *
+ *                  passive player (i.e. the one who just moved).   *
+ *                  Should be used to check if a graphical          *
+ *                  front-end should be called to pass it's input   *
+ *                  to upgrade_pawn().                              *
+ *                  Returns (Square) {-1, -1} if no upgradable pawn *
+ *                  exists.                                         *
+ ********************************************************************/
+Square pawn_upgradable(const Game game)
+{
+    if (game->current_state->pawn_upgradable)
+        return (Square) {game->current_state->last_move.to.row, game->current_state->last_move.to.column};
+    return (Square) {-1,-1};
+}
+
+/********************************************************************
+ * upgrade_pawn: Replaces the (only) upgradable pawn, by the        *
+ *               according piece.                                   *
+ *               No error-checking!                                 *
+ ********************************************************************/
+void upgrade_pawn(Game game, const Letter_piece piece)
+{
+    game->current_state->board[game->current_state->last_move.to.row][game->current_state->last_move.to.column]
+        = (Piece_i) {letter_to_piece(piece).color, letter_to_piece(piece).kind};
+}
+
+/********************************************************************
+ * victory_state: returns different codes based
+ ********************************************************************/
+int victory_state(Game game);
+
+/********************************************************************
+ * current_board: Returns a pointer to a staticly stored            *
+ *                64-letter-string, representing the actual board.  *
+ *                To be passed to graphic-output.                   *
+ ********************************************************************/
+const Letter_piece *current_board(Game game)
+{
+    static Letter_piece board_string[] = {NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY};
+
+    for (Letter_piece *p = board_string; *p; p++)
+        *p = NONE_EMPTY;
+
+    Letter_piece *write = board_string;
+    int i, j;
+    for (i = BOARD_ROWS-1; i >= 0; i--)
+    {
+        for (j = 0; j < BOARD_COLUMNS; j++)
+        {
+            if (EMPTY != game->current_state->board[i][j].kind)
+                *write = piece_to_letter_interf(&game->current_state->board[i][j]);
+            write++;
+        }
+    }
+
+    return board_string;
+}
+
 
 /********************************************************************
  * board_from_string: Writes the board_state represented by         *
@@ -103,7 +286,7 @@ void destroy_game(Game game)
  *                    Can be adjusted in chess_test_creater.h       *
  *                    (typedef Letter_piece).                       *
  ********************************************************************/
-static void board_from_string(Game_state *state, const Letter_piece *board_string)
+PRIVATE void board_from_string(Game_state *state, const Letter_piece *board_string)
 {
     const char *p = board_string;
     int i = BOARD_ROWS;
@@ -123,13 +306,50 @@ static void board_from_string(Game_state *state, const Letter_piece *board_strin
 }
 
 /********************************************************************
+ * piece_to_letter_interf: Takes and argument of type Piece_i and returns  *
+ *                  the according letter as specified in            *
+ *                  enum letter_piece.                              *
+ ********************************************************************/
+PRIVATE Letter_piece piece_to_letter_interf(const Piece_i *piece)
+{
+    switch (piece->color)
+    {
+        case NONE_i:    return NONE_EMPTY;
+        case WHITE_i:   switch (piece->kind)
+                        {
+                            case PAWN:      return WHITE_PAWN;
+                            case KNIGHT:    return WHITE_KNIGHT;
+                            case BISHOP:    return WHITE_BISHOP;
+                            case ROOK:      return WHITE_ROOK;
+                            case QUEEN:     return WHITE_QUEEN;
+                            case KING:      return WHITE_KING;
+                            default:        printf("error: %s: unkown piece; terminating\n", __func__);
+                                            exit(EXIT_FAILURE);
+                        }
+        case BLACK_i:   switch (piece->kind)
+                        {
+                            case PAWN:    return BLACK_PAWN;
+                            case KNIGHT:  return BLACK_KNIGHT;
+                            case BISHOP:  return BLACK_BISHOP;
+                            case ROOK:    return BLACK_ROOK;
+                            case QUEEN:   return BLACK_QUEEN;
+                            case KING:    return BLACK_KING;
+                            default:        printf("error: %s: unkown piece; terminating\n", __func__);
+                                            exit(EXIT_FAILURE);
+                        }
+        default:        printf("error: %s: unkown piece; terminating\n", __func__);
+                        exit(EXIT_FAILURE);
+    }
+}
+
+/********************************************************************
  * letter_to_piece: Converts an int (Letter_piece) representation   *
  *                  of a piece which is used for writing            *
  *                  chess-debugging-scripts into the internally     *
  *                  used struct (Piece_i) representation of a piece *
  *                  type.                                           *
  ********************************************************************/
-static Piece_i letter_to_piece(const Letter_piece letter)
+PRIVATE Piece_i letter_to_piece(const Letter_piece letter)
 {
     switch (letter)
     {
@@ -157,7 +377,7 @@ static Piece_i letter_to_piece(const Letter_piece letter)
  *                 Ignores last_move, king_white, king_black and    *
  *                 *previous_state.                            *
  ********************************************************************/
-static void set_game_state(Game_state *state, const Letter_piece *board)
+PRIVATE void set_game_state(Game_state *state, const Letter_piece *board)
 {
     state->move_number = 1;
     state->uneventful_moves = 0;
