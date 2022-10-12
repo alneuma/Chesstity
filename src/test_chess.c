@@ -7,7 +7,8 @@
 
 /* options (uncomment to activate) */
 //#define TEST_CORE_FUNCTIONS_H
-#define TEST_CORE_INTERFACE_H
+//#define TEST_CORE_INTERFACE_H
+#define TEST_DS_LIB_H
 
 /* include directives */
 #include "test-framework/unity/unity.h"
@@ -16,6 +17,7 @@
 #include "chess_test_creator.h"
 #include "graphic_output.h"
 #include "core_interface.h"
+#include "ds_lib.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -1666,6 +1668,66 @@ void test_upgrade_pawn_01(void)
 }
 #endif
 
+//////////////
+// ds_lib.h //
+//////////////
+#ifdef TEST_DS_LIB_H
+void test_stack_int_is_empty_01(void)
+{
+    Stack_int stack;
+    TEST_ASSERT_TRUE(stack_int_is_empty(stack));
+}
+
+void test_stack_int_is_empty_02(void)
+{
+    Stack_int stack;
+    stack_int_push(stack, 5);
+    TEST_ASSERT_TRUE(!stack_int_is_empty(stack));
+}
+
+void test_stack_int_is_empty_03(void)
+{
+    Stack_int stack;
+    stack_int_push(stack, 5);
+    int n;
+    stack_int_pop(stack, &n);
+    TEST_ASSERT_TRUE(stack_int_is_empty(stack));
+}
+
+void test_stack_int_peek_01(void)
+{
+    Stack_int stack;
+    int n;
+    TEST_ASSERT_TRUE(!stack_int_peek(stack, &n));
+}
+
+void test_stack_int_peek_02(void)
+{
+    Stack_int stack;
+    stack_int_push(stack, 5);
+    int n;
+    stack_int_peek(stack, &n);
+    TEST_ASSERT_TRUE(5 == n);
+}
+
+void test_stack_int_pop_01(void)
+{
+    Stack_int stack;
+    int n;
+    TEST_ASSERT_TRUE(!stack_int_pop(stack, &n));
+}
+
+void test_stack_int_pop_02(void)
+{
+    Stack_int stack;
+    stack_int_push(stack, 5);
+    int n;
+    stack_int_pop(stack, &n);
+    TEST_ASSERT_TRUE(5 == n);
+}
+
+#endif
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1759,6 +1821,16 @@ int main(void)
     RUN_TEST(test_pawn_upgradable_01);
     RUN_TEST(test_pawn_upgradable_02);
     RUN_TEST(test_upgrade_pawn_01);
+    #endif
+
+    #ifdef TEST_DS_LIB_H
+    RUN_TEST(test_stack_int_is_empty_01);
+    RUN_TEST(test_stack_int_is_empty_02);
+    RUN_TEST(test_stack_int_is_empty_03);
+    RUN_TEST(test_stack_int_peek_01);
+    RUN_TEST(test_stack_int_peek_02);
+    RUN_TEST(test_stack_int_pop_01);
+    RUN_TEST(test_stack_int_pop_02);
     #endif
 
     return UNITY_END();
