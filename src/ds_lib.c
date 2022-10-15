@@ -1,4 +1,5 @@
 #include "ds_lib.h"
+#include "mem_utilities.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -7,17 +8,14 @@ typedef struct stack_int_node {
     struct stack_int_node *next;
 } Stack_int_node;
 
-#define MEM_FAILURE \
-{ \
-    printf("error: %s: memory-allocation failed; aborting\n", __func__); \
-    exit(EXIT_FAILURE); \
-}
+struct stack_int {
+    struct stack_int_node *top;
+};
 
 bool stack_int_push(Stack_int stack, const int n)
 {
     Stack_int_node *new_node = malloc(sizeof(*new_node));
-    if (NULL == new_node)
-        MEM_FAILURE;
+    MEM_TEST(new_node);
 
     new_node->value = n;
     new_node->next = stack->top;
@@ -26,7 +24,7 @@ bool stack_int_push(Stack_int stack, const int n)
     return true;
 }
 
-void stack_int_make_empty(Stack_int stack);
+void stack_int_make_empty(Stack_int stack)
 {
     Stack_int_node *p = stack->top;
     Stack_int_node *temp = NULL;
@@ -36,6 +34,7 @@ void stack_int_make_empty(Stack_int stack);
         p = p->next;
         free(temp);
     }
+    stack->top = NULL;
 }
 
 bool stack_int_pop(Stack_int stack, int *n)
@@ -75,12 +74,10 @@ bool stack_int_peek(const Stack_int stack, int *n)
     return true;
 }
 
-/*
 Stack_int stack_int_create(void)
 {
-    Stack_int new_stack = malloc(sizeof(new_stack));
-    if (NULL == new_stack)
-        MEM_FAILURE;
+    Stack_int new_stack = malloc(sizeof(*new_stack));
+    MEM_TEST(new_stack);
 
     new_stack->top = NULL;
 
@@ -99,4 +96,3 @@ void stack_int_destory(Stack_int stack)
     }
     free(stack);
 }
-*/

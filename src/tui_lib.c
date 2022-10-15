@@ -2,6 +2,7 @@
  * tui_lib.c
  *
  * This file implements two objects Screen and Window
+ * Use tui_lib.h to access the 
  *
  * Overview Screen:
  * Screens are linked lists of nodes pointing to windows.
@@ -10,14 +11,18 @@
  *
  * Overview Window:
  * Windows contain the following information:
- * heigth and width
+ * height and width
  * position (denoted in height_pos and width_pos)
  * content (a string)
  * a list of all the screens it is in
  *
- * 
+ * A screen can be drawn, with specified height and width.
+ * This effectively creates a string of ' ' and '\n' wich repeatedly
+ * gets partly overriden with the content of the screen's windows.
+ * In the end this string will be sent to stdout with printf().
+ *
  ********************************************************************/
-// settings to enable debugging
+// comment out the following line to disable debugging
 #define DEBUG
 #ifdef DEBUG
 #define PRIVATE
@@ -27,6 +32,7 @@
 
 #include "ds_lib.h"
 #include "tui_lib.h"
+#include "mem_utilities.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -34,17 +40,22 @@
 
 // Denotes the maximum number of windows/screens, that can exist at the same time.
 // Keeps track of the amount of created windows/screens. Assigns a unique id to each window/screen.
-#define MAX_WINDOWS_SCREENS INT_MAX
+#define MAX_WINDOWS_SCREENS_ID INT_MAX
 
+// nodes of Window_screen_list, see below
 typedef struct node_ptr_to_screen {
-    Screen *screen;
+    Screen screen;
     struct node_ptr_to_screen *next;
 } Node_ptr_to_screen;
 
+// This is used inside of Window to safe all the screens a window is part of
+// It is necessary to save them, so that when a window gets destroyed
+// all the screens containing it can be accessed to remove the window from them.
 typedef struct window_screen_list {
     Node_ptr_to_screen *first;
 } *Window_screen_list;
 
+// typedef in tui_lib.h
 struct window {
     int id;
     int pos_height;
@@ -53,72 +64,87 @@ struct window {
     int width;
     int content_length;
     char *content;
-    Window_screen_list sreens;
+    Window_screen_list screens;
 };
 
-struct screen {
-    int id;
-    Node_ptr_to_window *lowest;
-};
-
+// Nodes for screens
 typedef struct node_ptr_to_window {
     int priority;
     Window window;
     struct node_ptr_to_window *next;
 } Node_ptr_to_window;
 
+// typedef in tui_lib.h
+struct screen {
+    int id;
+    Node_ptr_to_window *lowest;
+};
+
 // keeps track of available ids for windows/screens
-// ids that of destroyed windows/screens go onto the stack
-// when creating a new window/screen first looks for
-// available ids on the stack
-PRIVATE int id_counter = 0;
-PRIVATE struct stack_int {
-    Stack_int_node *top = NULL;
-} returned_ids;
+// ids of destroyed windows/screens go onto the stack
+// when creating a new window/screen it is first looked for
+// available ids on the stack.
+// If none is present, the counter will be increased by one.
+PRIVATE int id_counter = 1;
+PRIVATE Stack_int returned_ids = NULL;
 
 PRIVATE Window_screen_list screen_list_create(void);
 PRIVATE void window_add_screen(Window window, Screen screen);
 PRIVATE void window_remove_screen(Window window, Screen screen);
-PRIVATE void screen_list_destory(Window_screen_list screen_list);
-PRIVATE void screen_remove_window_simple(Screen_screen, Window window);
+PRIVATE void window_screen_list_destroy(Window window);
+PRIVATE void screen_remove_window_simple(Screen screen, Window window);
+PRIVATE int get_id(void);
 
 /********************************************************************
- * MEM_TEST:
+ * get_id: Returns a valid unique id.
+ *         0 is reserved as errorcode.
+ *         When 0 is returned no more valid unique ids are available.
  ********************************************************************/
-#define MEM_TEST(ptr) \
-{ \
-    if (NULL == (ptr)) \
-    { \
-        printf("error: %s: memory-allocation failed; aborting\n", __func__); \
-        exit(EXIT_FAILURE); \
-    } \
-}
-
-Screen screen_duplicate(Screen screen)
+PRIVATE int get_id(void)
 {
-    //Screen duplicate_screen = screen_create(void);
-}
+    if (NULL == returned_ids)
+    {
+        returned_ids = stack_int_create();
+        if (id_counter > MAX_WINDOWS_SCREENS_ID)
+            return 0;
+        return id_counter++;
+    }
 
-Window window_create(void)
-{
-    // checking if windows can still be created
-    // and setting id if it can
     int id;
     if (!stack_int_pop(returned_ids, &id))
     {
-        if (id_counter > MAX_WINDOWS)
-        {
-            printf("error: %s: maximum number of windows exceeded; returning NULL instead of new window\n", __func__);
-            return NULL;
-        }
+        if (id_counter > MAX_WINDOWS_SCREENS_ID)
+            return 0;
         else
         {
+            if (0 == id_counter)
+                id_counter++;
             id = id_counter++;
         }
     }
+    return id;
+} 
+
+/********************************************************************
+ * window_create: Returns NULL if no more ids are available.
+ *                During normal use this should rarely happen as
+ *                there is a total of INT_WIDTH ids available.
+ *
+ *                Default values are 0 for everything with content
+ *                of length 1 and '\0' as it's only character.
+ ********************************************************************/
+Window window_create(void)
+{
+    // checking for free id
+    int id;
+    if (!(id = get_id()))
+    {
+        printf("error: %s: maximum number of windows exceeded; returning NULL instead of new window\n", __func__);
+        return NULL;
+    }
 
     // creating new window
-    Window new_window = malloc(sizeof(new_window));
+    Window new_window = malloc(sizeof(*new_window));
     MEM_TEST(new_window);
 
     // setting default values
@@ -129,36 +155,28 @@ Window window_create(void)
     new_window->width = 0;
     new_window->content_length = 0;
     // +1 for '\0'
-    new_window->content = malloc((new_window->content_length + 1) * sizeof(new_window->content));
+    new_window->content = malloc((new_window->content_length + 1) * sizeof(*new_window->content));
     MEM_TEST(new_window->content);
 
-    *new_window->content = '\0';
+    *(new_window->content + 1) = '\0';
 
     new_window->screens = screen_list_create();
 
     return new_window;
 }
 
+/********************************************************************
+ * screen_list_create: Only used inside of window_create() to create
+ *                     the list to save screens of which the window
+ *                     is part.
+ ********************************************************************/
 PRIVATE Window_screen_list screen_list_create(void)
 {
-    Window_screen_list *new_screen_list = malloc(sizeof(*new_screen_list));
+    Window_screen_list new_screen_list = malloc(sizeof(*new_screen_list));
     MEM_TEST(new_screen_list);
 
-    return new_sreen_list;
-}
-
-PRIVATE void window_screen_list_destory(Window window)
-{
-    Node_ptr_to_screen *p = window->screen_list->first;
-    Node_ptr_to_screen *temp = NULL;
-    while (NULL != p)
-    {
-        screen_remove_window_simple(p->screen, window);
-        temp = p;
-        free(temp);
-        p = p->next;
-    }
-    free(window->screen_list);
+    new_screen_list->first = NULL;
+    return new_screen_list;
 }
 
 /********************************************************************
@@ -166,7 +184,13 @@ PRIVATE void window_screen_list_destory(Window window)
  *                              without error checking and without
  *                              removing the screen from the
  *                              windows's screen_list.
- *                              Used for screen_list_destroy.
+ *
+ *                              Only used in
+ *                              window_screen_list_destroy().
+ *
+ *                              In future could be used inside of
+ *                              a function, that removes a window
+ *                              from all screens.
  ********************************************************************/
 PRIVATE void screen_remove_window_simple(Screen screen, Window window)
 {
@@ -177,13 +201,42 @@ PRIVATE void screen_remove_window_simple(Screen screen, Window window)
         p_prev = p;
         p = p->next;
     }
-    p_prev->next = p->next;
+
+    if (NULL != p_prev)
+        p_prev->next = p->next;
+    else
+        screen->lowest = p->next;
+
     free(p);
 }
 
-// Assumes that screen is NOT already in window.
-// This assumption can be made, because window_add_screen()
-// will only be called by functions where this is already checked.
+
+/********************************************************************
+ * window_screen_list_destroy: So far only used in window_destroy().
+ *                             Uses screen_remove_window_simple() to
+ *                             make sure, that all references to
+ *                             window disappear from all screens.
+ ********************************************************************/
+PRIVATE void window_screen_list_destroy(Window window)
+{
+    Node_ptr_to_screen *p = window->screens->first;
+    Node_ptr_to_screen *temp = NULL;
+    while (NULL != p)
+    {
+        screen_remove_window_simple(p->screen, window);
+        temp = p;
+        p = p->next;
+        free(temp);
+    }
+    free(window->screens);
+}
+
+/********************************************************************
+ * window_add_screen: No error checking:
+ *                    Assumes, that screen is not already in the
+ *                    window's list of screens.
+ *                    So far only used in screen_add_window().
+ ********************************************************************/
 PRIVATE void window_add_screen(Window window, Screen screen)
 {
     Node_ptr_to_screen *new_node = malloc(sizeof(*new_node));
@@ -194,9 +247,15 @@ PRIVATE void window_add_screen(Window window, Screen screen)
     window->screens->first = new_node;
 }
 
-// Assumes that screen IS in window.
-// This assumption can be made, because window_add_screen()
-// will only be called by functions where this is already checked.
+/********************************************************************
+ * window_remove_screen: No error checking:
+ *                       Assumes, that screen is in the window's
+ *                       list of screens.
+ *                       So far only used in screen_remove_window().
+ *                       Does NOT remove the window from the screen
+ *                       by itself, only removes the screen from the
+ *                       window!
+ ********************************************************************/
 PRIVATE void window_remove_screen(Window window, Screen screen)
 {
     Node_ptr_to_screen *p = window->screens->first;
@@ -212,28 +271,23 @@ PRIVATE void window_remove_screen(Window window, Screen screen)
     else
         p_prev->next = p->next;
 
-    free(p)
+    free(p);
 }
 
+/********************************************************************
+ * screen_creat: Creates a screen with no windows.
+ ********************************************************************/
 Screen screen_create(void)
 {
-    // checking if screens can still be created
-    // and setting id if it can
+    // checking for free id
     int id;
-    if (!stack_int_pop(returned_ids, &id))
+    if (!(id = get_id()))
     {
-        if (id_counter > MAX_SCREENS)
-        {
-            printf("error: %s: maximum number of screens exceeded; returning NULL instead of new screen\n", __func__);
-            return NULL;
-        }
-        else
-        {
-            id = id_counter++;
-        }
+        printf("error: %s: maximum number of screens exceeded; returning NULL instead of new screen\n", __func__);
+        return NULL;
     }
 
-    Screen new_screen = malloc(sizeof(new_screen));
+    Screen new_screen = malloc(sizeof(*new_screen));
     MEM_TEST(new_screen);
 
     new_screen->id = id;
@@ -264,13 +318,15 @@ bool screen_add_window(Screen screen, Window window, int priority)
         MEM_TEST(new_node);
         new_node->window = window;
         new_node->priority = priority;
+        new_node->next = NULL;
         screen->lowest = new_node;
         window_add_screen(window, screen);
+        return true;
     }
 
     // check for possibility to downgrade existing priorities
     bool downgrade_prios_legal = true;
-    if (INT_MIN => screen->lowest->priority)
+    if (INT_MIN >= screen->lowest->priority)
         downgrade_prios_legal = false;
 
     // new_position will point to the node,
@@ -288,8 +344,8 @@ bool screen_add_window(Screen screen, Window window, int priority)
 
     // find the new_position, where window's node should be inserterd
     // if window already is in screen find it's current position i.e. old_position
-    Node_ptr_to_window *p;
-    Node_ptr_to_window *p_prev;
+    Node_ptr_to_window *p = screen->lowest;
+    Node_ptr_to_window *p_prev = NULL;
     while ((NULL != p) && ((NULL == old_position) || (NULL == new_position)))
     {
         // find new position
@@ -304,7 +360,7 @@ bool screen_add_window(Screen screen, Window window, int priority)
                 {
                     //downgrade priorities
                     Node_ptr_to_window *q = screen->lowest;
-                    while ((NULL != q) && (q->id != window->id))
+                    while ((NULL != q) && (q != p))
                     {
                         q->priority--;
                         q = q->next;
@@ -313,10 +369,15 @@ bool screen_add_window(Screen screen, Window window, int priority)
                 }
                 else
                     return false;
+
+                new_position = p->next;
+                new_position_prev = p;
             }
-            new_position = p;
-            if (NULL != p_prev)
+            else
+            {
+                new_position = p;
                 new_position_prev = p_prev;
+            }
         }
         // find old position
         if ((NULL == old_position) && (p->window->id == window->id))
@@ -328,13 +389,30 @@ bool screen_add_window(Screen screen, Window window, int priority)
             else
             {
                 old_position = p;
-                if (NULL != p_prev)
-                    old_position_prev = p_prev;
+                old_position_prev = p_prev;
             }
         }
         // advance search
         p_prev = p;
         p = p->next;
+    }
+
+    // if priority is larger than all priorities existing in screen
+    // prepare for inserting windows node at the end of the list
+    if (NULL == new_position)
+    {
+        if (p_prev != old_position)
+            new_position_prev = p_prev;
+        else
+        {
+            old_position->priority = priority;
+            return true;
+        }
+    }
+    else if (new_position == old_position)
+    {
+        old_position->priority = priority;
+        return true;
     }
 
     // create a new node for the window if it is not yet in screen
@@ -369,6 +447,13 @@ bool screen_add_window(Screen screen, Window window, int priority)
     return true;
 }
 
+/********************************************************************
+ * screen_remove_window: Removes the given window from the given
+ *                       screen.
+ *                       Uses window_remove_screen, to make sure,
+ *                       that the screen will also disappeat from
+ *                       the windows list of screens.
+ ********************************************************************/
 bool screen_remove_window(Screen screen, Window window)
 {
     Node_ptr_to_window *p = screen->lowest;
@@ -393,17 +478,38 @@ bool screen_remove_window(Screen screen, Window window)
     return false;
 }
 
+/********************************************************************
+ * window_destroy: Destroys a window.
+ *                 Calls window_screen_list_destroy, to makes sure,
+ *                 that all references to it disappear from all
+ *                 screens.
+ ********************************************************************/
 void window_destroy(Window window)
 {
+    if (NULL == returned_ids)
+        returned_ids = stack_int_create();
+
+    stack_int_push(returned_ids, window->id);
     window_screen_list_destroy(window);
     free(window->content);
     free(window);
 }
 
+/********************************************************************
+ * screen_destroy: Destroys a screen, removing it from all screen
+ *                 lists of all windows by calling
+ *                 window_remove_screen() on all of it's windows
+ *                 before freeing memory.
+ ********************************************************************/
 void screen_destroy(Screen screen)
 {
-    Node_ptr_to_window *p = screen->next;
-    Node_ptr_to_window *temp;
+    if (NULL == returned_ids)
+        returned_ids = stack_int_create();
+
+    stack_int_push(returned_ids, screen->id);
+
+    Node_ptr_to_window *p = screen->lowest;
+    Node_ptr_to_window *temp = NULL;
 
     while (NULL != p)
     {
@@ -416,13 +522,21 @@ void screen_destroy(Screen screen)
     free(screen);
 }
 
+//
+//
+//
+// functions below this line are not ready for testing yet
+//
+//
+//
 bool screen_draw(Screen screen, int height, int width);
-bool window_set_size(Window window, int height, int width);
+
+bool window_set_size(Window window, int height, int width)
 {
     if ((height < 0) || (width < 0))
         return false;
 
-    window->height = heigth;
+    window->height = height;
     window->width = width;
 
     return true;
@@ -433,7 +547,7 @@ bool window_set_position(Window window, int height, int width)
     if ((height < 0) || (width < 0))
         return false;
 
-    window->pos_height = heigth;
+    window->pos_height = height;
     window->pos_width = width;
 
     return true;
@@ -480,5 +594,9 @@ Window window_duplicate(Window window)
 
     return duplicate_window;
 }
-*/
 
+Screen screen_duplicate(Screen screen)
+{
+    //Screen duplicate_screen = screen_create(void);
+}
+*/

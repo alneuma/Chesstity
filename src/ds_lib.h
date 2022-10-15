@@ -8,13 +8,10 @@
 
 #include <stdbool.h>
 
-//needs to be publicly available, because 
-typedef struct stack_int {
-    Stack_int_node *top;
-} *Stack_int;
+typedef struct stack_int *Stack_int;
 
-//Stack_int stack_int_create(void);
-//void stack_int_destory(Stack_int stack);
+Stack_int stack_int_create(void);
+void stack_int_destory(Stack_int stack);
 void stack_int_make_empty(Stack_int stack);
 bool stack_int_push(Stack_int stack, int n);
 bool stack_int_pop(Stack_int stack, int *n);
