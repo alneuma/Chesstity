@@ -42,6 +42,12 @@
 // Keeps track of the amount of created windows/screens. Assigns a unique id to each window/screen.
 #define MAX_WINDOWS_SCREENS_ID INT_MAX
 
+typedef enum {
+    LEFT_i = 1;
+    CENTER_i = 2;
+    RIGHT_i = 3;
+} Orientation_i;
+
 // nodes of Window_screen_list, see below
 typedef struct node_ptr_to_screen {
     Screen screen;
@@ -58,10 +64,21 @@ typedef struct window_screen_list {
 // typedef in tui_lib.h
 struct window {
     int id;
-    int pos_height;
-    int pos_width;
+    // size (>= 0)
     int height;
     int width;
+    // frame variables (default false and ' ')
+    bool display_frame;
+    char delim_hori;
+    char delim_vert;
+    char delim_corner;
+    // space at boarder (all >= 0)
+    int space_top;
+    int space_bot;
+    int space_left;
+    int space_right;
+    // content variables
+    Orientation_i content_orientation;
     int content_length;
     char *content;
     Window_screen_list screens;
@@ -70,6 +87,8 @@ struct window {
 // Nodes for screens
 typedef struct node_ptr_to_window {
     int priority;
+    int pos_hori;
+    int pos_vert;
     Window window;
     struct node_ptr_to_window *next;
 } Node_ptr_to_window;
@@ -149,10 +168,17 @@ Window window_create(void)
 
     // setting default values
     new_window->id = id;
-    new_window->pos_height = 0;
-    new_window->pos_width = 0;
     new_window->height = 0;
     new_window->width = 0;
+    new_window->space_top = 0;
+    new_window->space_bot = 0;
+    new_window->space_left = 0;
+    new_window->space_right = 0;
+    new_window->display_frame = false;
+    new_window->delim_hori = ' ';
+    new_window->delim_vert = ' ';
+    new_window->delim_corner = ' ';
+    new_window->content_orientation = LEFT_i;
     new_window->content_length = 0;
     // +1 for '\0'
     new_window->content = malloc((new_window->content_length + 1) * sizeof(*new_window->content));
@@ -275,7 +301,7 @@ PRIVATE void window_remove_screen(Window window, Screen screen)
 }
 
 /********************************************************************
- * screen_creat: Creates a screen with no windows.
+ * screen_create: Creates a screen with no windows.
  ********************************************************************/
 Screen screen_create(void)
 {
@@ -318,6 +344,8 @@ bool screen_add_window(Screen screen, Window window, int priority)
         MEM_TEST(new_node);
         new_node->window = window;
         new_node->priority = priority;
+        new_node->pos_hori = 0;
+        new_node->pos_vert = 0;
         new_node->next = NULL;
         screen->lowest = new_node;
         window_add_screen(window, screen);
@@ -423,6 +451,8 @@ bool screen_add_window(Screen screen, Window window, int priority)
         MEM_TEST(new_node);
         new_node->window = window;
         new_node->priority = priority;
+        new_node->pos_hori = 0;
+        new_node->pos_vert = 0;
         new_node->next = new_position;
         if (NULL == new_position_prev)
             screen->lowest = new_node;
@@ -531,6 +561,61 @@ void screen_destroy(Screen screen)
 //
 bool screen_draw(Screen screen, int height, int width);
 
+/********************************************************************
+ * window_set_frame: Defines how the frame of a window is to be
+ *                   displayed.
+ *                   Needs to be used in conjunction with
+ *                   window_display_frame() as by itself it will only
+ *                   control HOW a frame would be displayed, but not
+ *                   IF it is displayed at all.
+ *                   Only accepts printable characters as input.
+ *                   default for all three values is ' '
+ *
+ ********************************************************************/
+bool window_set_frame(Window window, char delim_hori, char delim_vert, char corner)
+{
+    if (!isprint(delim_hori) || !isprint(delim_vert) || !isprint(corner))
+        return false;
+    window->delim_hori = delim_hori;
+    window->delim_vert = delim_vert;
+    window->delim_corner = delim_corner;
+
+    return true;
+}
+
+/********************************************************************
+ * window_set_space: Defines how much space should be left between
+ *                   the windows content and it's boarder or it's
+ *                   frame if the latter is set to be displayed.
+ ********************************************************************/
+bool window_set_space(Window window, int top, int, bot, int left, int right)
+{
+    if ((top < 0) || (bot < 0) || (left < 0) || (right < 0))
+        return false;
+
+    window->top = top;
+    window->bot = bot;
+    window->left = left;
+    window->rigth = right;
+    
+    return true;
+}
+
+/********************************************************************
+ * window_display_frame: Defines if the window is displayed with a
+ *                       frame.
+ *                       default = false
+ ********************************************************************/
+void window_display_frame(Window window, bool display)
+{
+    window->display_frame = display;
+}
+
+/********************************************************************
+ * window_set_size: Sets the sets the size of a window.
+ *                  Returns false if one of the give values is
+ *                  negative.
+ ********************************************************************/
 bool window_set_size(Window window, int height, int width)
 {
     if ((height < 0) || (width < 0))
@@ -542,17 +627,50 @@ bool window_set_size(Window window, int height, int width)
     return true;
 }
 
-bool window_set_position(Window window, int height, int width)
+/********************************************************************
+ * screen_window_set_position: Sets the position of a window inside
+ *                             of a screen.
+ *                             Returns false if window is not in
+ *                             screen.
+ ********************************************************************/
+bool screen_window_set_position(Screen screen, Window window, int pos_hori, int pos_vert)
 {
-    if ((height < 0) || (width < 0))
+    Node_ptr_to_window *p = screen->lowest;
+    while (p != NULL)
+    {
+        if (p->window->id == window->id)
+        {
+            p->pos_hori = pos_hori;
+            p->pos_vert = pos_vert;
+            return true;
+        }
+    }
+    return false;
+}
+
+/********************************************************************
+ * window_set_orientation: Defines the orientation with which the
+ *                         content of a window will be displayed.
+ *                         accepted arguments for orientation:
+ *                         LEFT, CENTER, RIGHT
+ ********************************************************************/
+bool window_set_orientation(Window window, Orientation orientation)
+{
+    if ((LEFT_i != orientation) && (CENTER_i != orientation) && (RIGHT_i != orientation))
         return false;
 
-    window->pos_height = height;
-    window->pos_width = width;
+    window->content_orientation = orientation;
 
     return true;
 }
 
+/********************************************************************
+ * window_update_content: Rewrites the content (i.e. the string
+ *                        which will be displayed when the window
+ *                        is drawn as part of a screen) of a window.
+ *                        Returns false, if content_length is
+ *                        negative.
+ ********************************************************************/
 bool window_update_content(Window window, char *content, int content_length)
 {
     // validate input
@@ -562,10 +680,9 @@ bool window_update_content(Window window, char *content, int content_length)
     // adjust window's content_length
     if (content_length != window->content_length)
     {
-        free(window->content);
         window->content_length = content_length;
-        window->content = malloc((window->content_length + 1) * sizeof(window->content));
-        MEM_TEST(window);
+        window->content = realloc(window->content, (window->content_length + 1) * sizeof(window->content));
+        MEM_TEST(window->content);
     }
 
     // copying
@@ -576,19 +693,37 @@ bool window_update_content(Window window, char *content, int content_length)
     return true;
 }
 
-/*
+/********************************************************************
+ * window_duplicate: Returns a duplicate of a window.
+ *                   The duplicate is an exact copy of the original.
+ *                   The only difference are their unique ids and
+ *                   the fact, that the duplicate won't be part of
+ *                   any screens when it is created, even if the
+ *                   original already is part of one or multiple
+ *                   screens.
+ ********************************************************************/
 Window window_duplicate(Window window)
 {
     duplicate_window = window_create(); // gives the duplicate a different id which is desired
 
-    duplicate_window->pos_height = window->pos_height;
-    duplicate_window->pos_width = window->pos_width;
     duplicate_window->height = window->height;
     duplicate_window->width = window->width;
+    // frame variables (default false and ' ')
+    duplicate_window->display_frame = window->display_frame;
+    duplicate_window->delim_hori = window->delim_hori;
+    duplicate_window->delim_vert = window->delim_vert;
+    duplicate_window->delim_corner = window->delim_corner;
+    // space at boarder (all >= 0)
+    duplicate_window->space_top = window->space_top;
+    duplicate_window->space_bot = window->space_bot;
+    duplicate_window->space_left = window->space_left;
+    duplicate_window->space_right = window->space_right;
+    // content variables
+    duplicate_window->content_orientation = window->content_orientation;
     duplicate_window->content_length = window->content_length;
     // +1 for '\0'
     duplicate_window->content = malloc((duplicate_window->content_length + 1) * sizeof(duplicate_window->content));
-    MEM_TEST(duplicate_window);
+    MEM_TEST(duplicate_window->content);
 
     strcpy(duplicate_window->content, window->content);
 
@@ -599,4 +734,3 @@ Screen screen_duplicate(Screen screen)
 {
     //Screen duplicate_screen = screen_create(void);
 }
-*/

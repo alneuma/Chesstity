@@ -9,20 +9,21 @@
 //#define TEST_CORE_FUNCTIONS_H
 //#define TEST_CORE_INTERFACE_H
 #define TEST_DS_LIB_H
+#define TEST_TUI_LIB_H
 
 /* include directives */
 #include "test-framework/unity/unity.h"
 #include "test-framework/unity/unity_chess_extension.h"
 
 #include "chess_test_creator.h"
+#include "tui_test_lib.h"
 #include "graphic_output.h"
+#include "core_functions.h"
 #include "core_interface.h"
 #include "ds_lib.h"
+#include "tui_lib.h"
 #include <stdbool.h>
 #include <stdlib.h>
-
-/* unit to be tested */
-#include "core_functions.h"
 
 void setUp (void) {} /* Is run before every test, put unit init calls here. */
 void tearDown (void) {} /* Is run after every test, put unit clean-up calls here. */
@@ -1674,58 +1675,303 @@ void test_upgrade_pawn_01(void)
 #ifdef TEST_DS_LIB_H
 void test_stack_int_is_empty_01(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     TEST_ASSERT_TRUE(stack_int_is_empty(stack));
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_is_empty_02(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     stack_int_push(stack, 5);
     TEST_ASSERT_TRUE(!stack_int_is_empty(stack));
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_is_empty_03(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     stack_int_push(stack, 5);
     int n;
     stack_int_pop(stack, &n);
     TEST_ASSERT_TRUE(stack_int_is_empty(stack));
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_peek_01(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     int n;
     TEST_ASSERT_TRUE(!stack_int_peek(stack, &n));
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_peek_02(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     stack_int_push(stack, 5);
     int n;
     stack_int_peek(stack, &n);
     TEST_ASSERT_TRUE(5 == n);
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_pop_01(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     int n;
     TEST_ASSERT_TRUE(!stack_int_pop(stack, &n));
+    stack_int_destroy(stack);
 }
 
 void test_stack_int_pop_02(void)
 {
-    Stack_int stack;
+    Stack_int stack = stack_int_create();
     stack_int_push(stack, 5);
     int n;
     stack_int_pop(stack, &n);
     TEST_ASSERT_TRUE(5 == n);
+    stack_int_destroy(stack);
+}
+#endif
+
+#ifdef TEST_TUI_LIB_H
+// tests here got accidentally deleted
+void test_screen_add_window_11_multiple_screens_multiple_windows_01(void)
+{
+    Screen s1 = screen_create();
+    Screen s2 = screen_create();
+    Window w1 = window_create();
+    Window w2 = window_create();
+
+    screen_add_window(s1, w1, 1);
+    screen_add_window(s2, w2, 1);
+    screen_add_window(s2, w1, 1);
+    screen_add_window(s1, w2, 1);
+
+    int prios_s1_ought[2] = {0,1};
+    int prios_s2_ought[2] = {0,1};
+    int ids_s1_ought[2] = {3,4};
+    int ids_s2_ought[2] = {4,3};
+    int ids_w1_ought[2] = {2,1};
+    int ids_w2_ought[2] = {1,2};
+
+    int amount;
+    int *prios_s1 = screen_windows_prio(s1, &amount);
+    int *prios_s2 = screen_windows_prio(s2, &amount);
+    int *ids_s1 = screen_windows_id(s1, &amount);
+    int *ids_s2 = screen_windows_id(s2, &amount);
+    int *ids_w1 = window_screens_id(w1, &amount);
+    int *ids_w2 = window_screens_id(w2, &amount);
+
+    TEST_ASSERT_TRUE((compare_arrays_int(prios_s1, prios_s1_ought, 2))
+                  && (compare_arrays_int(prios_s2, prios_s2_ought, 2))
+                  && (compare_arrays_int(ids_s1, ids_s1_ought, 2))
+                  && (compare_arrays_int(ids_s2, ids_s2_ought, 2))
+                  && (compare_arrays_int(ids_w1, ids_w1_ought, 2))
+                  && (compare_arrays_int(ids_w2, ids_w2_ought, 2)));
+
+    window_destroy(w2);
+    window_destroy(w1);
+    screen_destroy(s2);
+    screen_destroy(s1);
+
+    free(prios_s1);
+    free(prios_s2);
+    free(ids_s1);
+    free(ids_s2);
+    free(ids_w1);
+    free(ids_w2);
 }
 
+void test_screen_add_window_12_multiple_screens_multiple_windows_02(void)
+{
+    Screen s1 = screen_create();
+    Screen s2 = screen_create();
+    Window w1 = window_create();
+    Window w2 = window_create();
+
+    screen_add_window(s1, w1, 1);
+    screen_add_window(s2, w2, 1);
+    screen_add_window(s2, w1, 1);
+    screen_add_window(s1, w2, 1);
+
+    window_destroy(w2);
+
+    int prios_s1_ought[1] = {0};
+    int prios_s2_ought[1] = {1};
+    int ids_s1_ought[1] = {3};
+    int ids_s2_ought[1] = {3};
+    int ids_w1_ought[2] = {2,1};
+
+    int amount;
+    int *prios_s1 = screen_windows_prio(s1, &amount);
+    int *prios_s2 = screen_windows_prio(s2, &amount);
+    int *ids_s1 = screen_windows_id(s1, &amount);
+    int *ids_s2 = screen_windows_id(s2, &amount);
+    int *ids_w1 = window_screens_id(w1, &amount);
+
+    TEST_ASSERT_TRUE((compare_arrays_int(prios_s1, prios_s1_ought, 1))
+                  && (compare_arrays_int(prios_s2, prios_s2_ought, 1))
+                  && (compare_arrays_int(ids_s1, ids_s1_ought, 1))
+                  && (compare_arrays_int(ids_s2, ids_s2_ought, 1))
+                  && (compare_arrays_int(ids_w1, ids_w1_ought, 2)));
+
+    window_destroy(w1);
+    screen_destroy(s2);
+    screen_destroy(s1);
+
+    free(prios_s1);
+    free(prios_s2);
+    free(ids_s1);
+    free(ids_s2);
+    free(ids_w1);
+}
+
+void test_screen_add_window_13_multiple_screens_multiple_windows_03(void)
+{
+    Window w1 = window_create();
+    Window w2 = window_create();
+    Screen s1 = screen_create();
+    Screen s2 = screen_create();
+
+    screen_add_window(s1, w1, 1);
+    screen_add_window(s2, w2, 1);
+    screen_add_window(s2, w1, 1);
+    screen_add_window(s1, w2, 1);
+
+    screen_destroy(s2);
+
+    int prios_s1_ought[2] = {0,1};
+    int ids_s1_ought[2] = {1,2};
+    int ids_w1_ought[2] = {3};
+    int ids_w2_ought[2] = {3};
+
+    int amount;
+    int *prios_s1 = screen_windows_prio(s1, &amount);
+    int *ids_s1 = screen_windows_id(s1, &amount);
+    int *ids_w1 = window_screens_id(w1, &amount);
+    int *ids_w2 = window_screens_id(w2, &amount);
+
+    TEST_ASSERT_TRUE((compare_arrays_int(prios_s1, prios_s1_ought, 2))
+                  && (compare_arrays_int(ids_s1, ids_s1_ought, 2))
+                  && (compare_arrays_int(ids_w1, ids_w1_ought, 1))
+                  && (compare_arrays_int(ids_w2, ids_w2_ought, 1)));
+
+    screen_destroy(s1);
+    window_destroy(w2);
+    window_destroy(w1);
+
+    free(prios_s1);
+    free(ids_s1);
+    free(ids_w1);
+    free(ids_w2);
+}
+
+void test_screen_remove_window_01(void)
+{
+    Screen s1 = screen_create();
+    Window w1 = window_create();
+
+    screen_add_window(s1, w1, 1);
+
+    screen_remove_window(s1, w1);
+
+    int amount_s1;
+    int *prios_s1 = screen_windows_prio(s1, &amount_s1);
+    int amount_w1;
+    int *ids_w1 = window_screens_id(w1, &amount_w1);
+
+    TEST_ASSERT_TRUE((0 == amount_s1) && (0 == amount_s1));
+
+    window_destroy(w1);
+    screen_destroy(s1);
+
+    free(prios_s1);
+    free(ids_w1);
+}
+
+void test_screen_remove_window_02(void)
+{
+    Screen s1 = screen_create();
+    Screen s2 = screen_create();
+    Window w1 = window_create();
+    Window w2 = window_create();
+
+    screen_add_window(s1, w1, 1);
+    screen_add_window(s2, w2, 1);
+    screen_add_window(s2, w1, 1);
+    screen_add_window(s1, w2, 1);
+
+    screen_remove_window(s1, w1);
+
+    int prios_s1_ought[2] = {1};
+    int prios_s2_ought[2] = {0,1};
+    int ids_s1_ought[2] = {4};
+    int ids_s2_ought[2] = {4,3};
+    int ids_w1_ought[2] = {2};
+    int ids_w2_ought[2] = {1,2};
+
+    int amount;
+    int *prios_s1 = screen_windows_prio(s1, &amount);
+    int *prios_s2 = screen_windows_prio(s2, &amount);
+    int *ids_s1 = screen_windows_id(s1, &amount);
+    int *ids_s2 = screen_windows_id(s2, &amount);
+    int *ids_w1 = window_screens_id(w1, &amount);
+    int *ids_w2 = window_screens_id(w2, &amount);
+
+    TEST_ASSERT_TRUE((compare_arrays_int(prios_s1, prios_s1_ought, 1))
+                  && (compare_arrays_int(prios_s2, prios_s2_ought, 2))
+                  && (compare_arrays_int(ids_s1, ids_s1_ought, 1))
+                  && (compare_arrays_int(ids_s2, ids_s2_ought, 2))
+                  && (compare_arrays_int(ids_w1, ids_w1_ought, 1))
+                  && (compare_arrays_int(ids_w2, ids_w2_ought, 2)));
+
+    window_destroy(w2);
+    window_destroy(w1);
+    screen_destroy(s2);
+    screen_destroy(s1);
+
+    free(prios_s1);
+    free(prios_s2);
+    free(ids_s1);
+    free(ids_s2);
+    free(ids_w1);
+    free(ids_w2);
+}
+
+void test_screen_remove_window_03(void)
+{
+    Screen s1 = screen_create();
+    Screen s2 = screen_create();
+    Screen s3 = screen_create();
+    Screen s4 = screen_create();
+    Screen s5 = screen_create();
+    Window w1 = window_create();
+
+    screen_add_window(s1, w1, 1);
+    screen_add_window(s2, w1, 1);
+    screen_add_window(s3, w1, 1);
+    screen_add_window(s4, w1, 1);
+    screen_add_window(s5, w1, 1);
+
+    screen_remove_window(s1, w1);
+
+    int amount_w1;
+    int *ids_w1 = window_screens_id(w1, &amount_w1);
+    int ids_w1_ought[4] = {5,4,3,2};
+
+    TEST_ASSERT_TRUE(compare_arrays_int(ids_w1, ids_w1_ought, 4) && (4 == amount_w1));
+
+    window_destroy(w1);
+    screen_destroy(s5);
+    screen_destroy(s4);
+    screen_destroy(s3);
+    screen_destroy(s2);
+    screen_destroy(s1);
+
+    free(ids_w1);
+}
 #endif
 
 int main(void)
@@ -1833,6 +2079,15 @@ int main(void)
     RUN_TEST(test_stack_int_pop_02);
     #endif
 
+    #ifdef TEST_TUI_LIB_H
+    // tests here got accidentally deleted
+    RUN_TEST(test_screen_add_window_11_multiple_screens_multiple_windows_01);
+    RUN_TEST(test_screen_add_window_12_multiple_screens_multiple_windows_02);
+    RUN_TEST(test_screen_add_window_13_multiple_screens_multiple_windows_03);
+    RUN_TEST(test_screen_remove_window_01);
+    RUN_TEST(test_screen_remove_window_02);
+    RUN_TEST(test_screen_remove_window_03);
+    #endif
+
     return UNITY_END();
 }
-

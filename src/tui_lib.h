@@ -29,6 +29,12 @@
 typedef struct screen *Screen;
 typedef struct window *Window;
 
+typedef enum {
+    LEFT = 1;
+    CENTER = 2;
+    RIGHT = 3;
+} Orientation;
+
 /********************************************************************
  * window_create: every window is assigned a unique identifier
  *                when created. This is the way in which
@@ -40,6 +46,7 @@ typedef struct window *Window;
 Window window_create(void);
 
 /********************************************************************
+ * screen_create: Creates a new screen without any windows.
  ********************************************************************/
 Screen screen_create(void);
 
@@ -76,16 +83,57 @@ void window_destroy(Window window);
  ********************************************************************/
 void screen_destroy(Screen screen);
 
-//
-//
-//
-// functions below this line are not ready for testing yet
-//
-//
-//
+//////////////////// below this line everything is untested //////////////////
+
+/********************************************************************
+ * window_set_frame: Defines how the frame of a window is to be
+ *                   displayed.
+ *                   Needs to be used in conjunction with
+ *                   window_display_frame() as by itself it will only
+ *                   control HOW a frame would be displayed, but not
+ *                   IF it is displayed at all.
+ *                   Only accepts printable characters as input.
+ *                   default for all three values is ' '
+ *
+ ********************************************************************/
+bool window_set_frame(Window window, char delim_hori, char delim_vert, char corner);
+
+/********************************************************************
+ * window_set_orientation: Defines the orientation with which the
+ *                         content of a window will be displayed.
+ *                         accepted arguments for orientation:
+ *                         LEFT, CENTER, RIGHT
+ ********************************************************************/
+bool window_set_orientation(Window window, Orientation orientation);
+
+/********************************************************************
+ * window_set_space: Defines how much space should be left between
+ *                   the windows content and it's boarder or it's
+ *                   frame if the latter is set to be displayed.
+ ********************************************************************/
+bool window_set_space(Window window, int top, int, bot, int left, int right);
+
+/********************************************************************
+ * window_display_frame: Defines if the window is displayed with a
+ *                       frame.
+ *                       default = false
+ ********************************************************************/
+void window_display_frame(Window window, bool display);
+
+/********************************************************************
+ * window_set_size: Sets the sets the size of a window.
+ *                  Returns false if one of the give values is
+ *                  negative.
+ ********************************************************************/
 bool window_set_size(Window window, int height, int width);
 
-bool window_set_position(Window window, int height, int width);
+/********************************************************************
+ * screen_window_set_position: Sets the position of a window inside
+ *                             of a screen.
+ *                             Returns false if window is not in
+ *                             screen.
+ ********************************************************************/
+bool screen_window_set_position(Screen screen, Window window, int pos_hori, int pos_vert);
 
 /********************************************************************
  * screen_draw: Prints all the windows in screen one over the other
@@ -99,13 +147,11 @@ bool window_set_position(Window window, int height, int width);
 bool screen_draw(Screen screen, int height, int width);
 
 /********************************************************************
- * screen_add_content: Fills string into window height and width
- *                     formatting according to heigth and length
- *                     is ignored until window gets accessed as
- *                     part of a call of draw_screen().
- *                     Returns false if content_length < 0;
- *                     If content is longer than content_length it
- *                     gets truncated.
+ * window_update_content: Rewrites the content (i.e. the string
+ *                        which will be displayed when the window
+ *                        is drawn as part of a screen) of a window.
+ *                        Returns false, if content_length is
+ *                        negative.
  ********************************************************************/
 bool window_update_content(Window window, char *content, int content_length);
 
@@ -118,5 +164,12 @@ bool window_update_content(Window window, char *content, int content_length);
 Screen screen_duplicate(Screen screen);
 
 /********************************************************************
+ * window_duplicate: Returns a duplicate of a window.
+ *                   The duplicate is an exact copy of the original.
+ *                   The only difference are their unique ids and
+ *                   the fact, that the duplicate won't be part of
+ *                   any screens when it is created, even if the
+ *                   original already is part of one or multiple
+ *                   screens.
  ********************************************************************/
-Window window_duplicate(Window window);
+Window window_duplicate(Window window)

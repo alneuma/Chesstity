@@ -26,10 +26,21 @@ typedef struct window_screen_list {
 
 struct window {
     int id;
-    int pos_height;
-    int pos_width;
+    // size (>= 0)
     int height;
     int width;
+    // frame variables (default false and ' ')
+    bool display_frame;
+    char delim_hori;
+    char delim_vert;
+    char delim_corner;
+    // space at boarder (all >= 0)
+    int space_top;
+    int space_bot;
+    int space_left;
+    int space_right;
+    // content variables
+    Orientation_i content_orientation;
     int content_length;
     char *content;
     Window_screen_list screens;

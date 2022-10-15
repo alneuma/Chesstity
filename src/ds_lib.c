@@ -84,7 +84,7 @@ Stack_int stack_int_create(void)
     return new_stack;
 }
 
-void stack_int_destory(Stack_int stack)
+void stack_int_destroy(Stack_int stack)
 {
     Stack_int_node *p = stack->top;
     Stack_int_node *temp = NULL;
