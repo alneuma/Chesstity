@@ -23,6 +23,7 @@
 #include "ds_lib.h"
 #include "tui_lib.h"
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 
 void setUp (void) {} /* Is run before every test, put unit init calls here. */
@@ -1737,6 +1738,62 @@ void test_stack_int_pop_02(void)
 
 #ifdef TEST_TUI_LIB_H
 // tests here got accidentally deleted
+void test_window_create_01(void)
+{
+    Window w1 = window_create();
+
+    int amount;
+    int *ids_w1 = window_screens_id(w1, &amount);
+
+    TEST_ASSERT_TRUE(0 == amount);
+
+    window_destroy(w1);
+
+    free(ids_w1);
+}
+
+void test_screen_create_01(void)
+{
+    Screen s1 = screen_create();
+
+    int amount;
+    int *ids_s1 = screen_windows_id(s1, &amount);
+
+    TEST_ASSERT_TRUE(0 == amount);
+
+    screen_destroy(s1);
+
+    free(ids_s1);
+}
+
+void test_screen_add_window_01_one_screen_one_window_01(void)
+{
+    Window w1 = window_create();
+    Screen s1 = screen_create();
+
+    screen_add_window(s1, w1, 1);
+
+    int prios_s1_ought[1] = {1};
+    int ids_s1_ought[1] = {1};
+    int ids_w1_ought[1] = {2};
+
+    int amount;
+    int *prios_s1 = screen_windows_prio(s1, &amount);
+    int *ids_s1 = screen_windows_id(s1, &amount);
+    int *ids_w1 = window_screens_id(w1, &amount);
+
+    TEST_ASSERT_TRUE((compare_arrays_int(prios_s1, prios_s1_ought, 1))
+                  && (compare_arrays_int(ids_s1, ids_s1_ought, 1))
+                  && (compare_arrays_int(ids_w1, ids_w1_ought, 1)));
+
+    screen_destroy(s1);
+    window_destroy(w1);
+
+    free(prios_s1);
+    free(ids_s1);
+    free(ids_w1);
+}
+
 void test_screen_add_window_11_multiple_screens_multiple_windows_01(void)
 {
     Screen s1 = screen_create();
@@ -1748,6 +1805,13 @@ void test_screen_add_window_11_multiple_screens_multiple_windows_01(void)
     screen_add_window(s2, w2, 1);
     screen_add_window(s2, w1, 1);
     screen_add_window(s1, w2, 1);
+
+    /*
+    screen_print_info(s1);
+    screen_print_info(s2);
+    window_print_info(w1);
+    window_print_info(w2);
+    */
 
     int prios_s1_ought[2] = {0,1};
     int prios_s2_ought[2] = {0,1};
@@ -1972,6 +2036,21 @@ void test_screen_remove_window_03(void)
 
     free(ids_w1);
 }
+
+void test_window_print_01(void)
+{
+    Window w = window_create();
+    char *str = "Hello my name is this and that, and other things\nNow we are talking!\n";
+    window_update_content(w, str, strlen(str));
+    window_set_frame(w, '=', '|', 'O');
+    window_display_frame(w, true);
+    window_set_space(w, 1, 1, 2, 2);
+    window_set_size(w, 20, 40);
+    window_print(w, ' ', ' ');
+    TEST_ASSERT_TRUE(false);
+    window_destroy(w);
+}
+
 #endif
 
 int main(void)
@@ -2081,12 +2160,16 @@ int main(void)
 
     #ifdef TEST_TUI_LIB_H
     // tests here got accidentally deleted
+    RUN_TEST(test_window_create_01);
+    RUN_TEST(test_screen_create_01);
+    RUN_TEST(test_screen_add_window_01_one_screen_one_window_01);
     RUN_TEST(test_screen_add_window_11_multiple_screens_multiple_windows_01);
     RUN_TEST(test_screen_add_window_12_multiple_screens_multiple_windows_02);
     RUN_TEST(test_screen_add_window_13_multiple_screens_multiple_windows_03);
     RUN_TEST(test_screen_remove_window_01);
     RUN_TEST(test_screen_remove_window_02);
     RUN_TEST(test_screen_remove_window_03);
+    RUN_TEST(test_window_print_01);
     #endif
 
     return UNITY_END();

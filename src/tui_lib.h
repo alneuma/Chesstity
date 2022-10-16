@@ -22,17 +22,19 @@
  * A challange will be to keep track of window priorities,
  * as no two windows should have the same priority.
  *
- *
  ********************************************************************/
+#ifndef TUI_LIB_H
+#define TUI_LIB_H
+
 #include <stdbool.h>
 
 typedef struct screen *Screen;
 typedef struct window *Window;
 
-typedef enum {
-    LEFT = 1;
-    CENTER = 2;
-    RIGHT = 3;
+typedef enum orientation {
+    LEFT = 1,
+    CENTER = 2,
+    RIGHT = 3,
 } Orientation;
 
 /********************************************************************
@@ -49,6 +51,13 @@ Window window_create(void);
  * screen_create: Creates a new screen without any windows.
  ********************************************************************/
 Screen screen_create(void);
+
+/********************************************************************
+ * screen_set_size: Sets height and width of screen.
+ *                  Returns false if either either of the to size
+ *                  arguments is negative.
+ ********************************************************************/
+bool screen_set_size(Screen screen, int height, int width);
 
 /********************************************************************
  * screen_add_window: Adds a pointer to window to screen with
@@ -96,7 +105,7 @@ void screen_destroy(Screen screen);
  *                   default for all three values is ' '
  *
  ********************************************************************/
-bool window_set_frame(Window window, char delim_hori, char delim_vert, char corner);
+bool window_set_frame(Window window, char delim_hori, char delim_vert, char delim_corner);
 
 /********************************************************************
  * window_set_orientation: Defines the orientation with which the
@@ -111,7 +120,7 @@ bool window_set_orientation(Window window, Orientation orientation);
  *                   the windows content and it's boarder or it's
  *                   frame if the latter is set to be displayed.
  ********************************************************************/
-bool window_set_space(Window window, int top, int, bot, int left, int right);
+bool window_set_space(Window window, int top, int bot, int left, int right);
 
 /********************************************************************
  * window_display_frame: Defines if the window is displayed with a
@@ -136,17 +145,6 @@ bool window_set_size(Window window, int height, int width);
 bool screen_window_set_position(Screen screen, Window window, int pos_hori, int pos_vert);
 
 /********************************************************************
- * screen_draw: Prints all the windows in screen one over the other
- *              according to their priorities. Highest priority on
- *              top.
- *              This happens by creating and repeatedly modifying
- *              a string, which will be printed in the end.
- *              Returns false if height or width is a negative
- *              negative number.
- ********************************************************************/
-bool screen_draw(Screen screen, int height, int width);
-
-/********************************************************************
  * window_update_content: Rewrites the content (i.e. the string
  *                        which will be displayed when the window
  *                        is drawn as part of a screen) of a window.
@@ -161,7 +159,7 @@ bool window_update_content(Window window, char *content, int content_length);
  *                   The duplicate-screen's nodes will point to the
  *                   same windows, as the original-screen's nodes do.
  ********************************************************************/
-Screen screen_duplicate(Screen screen);
+//Screen screen_duplicate(Screen screen);
 
 /********************************************************************
  * window_duplicate: Returns a duplicate of a window.
@@ -172,4 +170,28 @@ Screen screen_duplicate(Screen screen);
  *                   original already is part of one or multiple
  *                   screens.
  ********************************************************************/
-Window window_duplicate(Window window)
+Window window_duplicate(Window window);
+
+////////////////////////////
+//  Functions for output  //
+////////////////////////////
+/********************************************************************
+ * screen_draw: Prints all the windows in screen one over the other
+ *              according to their priorities. Highest priority on
+ *              top.
+ *              This happens by creating and repeatedly modifying
+ *              a string, which will be printed in the end.
+ *              Returns false if height or width is a negative
+ *              negative number.
+ ********************************************************************/
+bool screen_draw(Screen screen);
+
+/********************************************************************
+ * window_print: Prints the content of a window wiht all specified
+ *               parameters.
+ *               Not yet implemented:
+ *               display_modes
+ *               orientation
+ ********************************************************************/
+void window_print(Window window, char fill_line, char fill_border);
+#endif

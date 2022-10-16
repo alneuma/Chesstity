@@ -33,6 +33,8 @@
 #include "ds_lib.h"
 #include "tui_lib.h"
 #include "mem_utilities.h"
+#include <ctype.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -41,11 +43,13 @@
 // Denotes the maximum number of windows/screens, that can exist at the same time.
 // Keeps track of the amount of created windows/screens. Assigns a unique id to each window/screen.
 #define MAX_WINDOWS_SCREENS_ID INT_MAX
+#define DEFAULT_FILL_LINE ' '
+#define DEFAULT_FILL_BORDER ' '
 
-typedef enum {
-    LEFT_i = 1;
-    CENTER_i = 2;
-    RIGHT_i = 3;
+typedef enum orientation_i {
+    LEFT_i = 1,
+    CENTER_i = 2,
+    RIGHT_i = 3,
 } Orientation_i;
 
 // nodes of Window_screen_list, see below
@@ -72,7 +76,7 @@ struct window {
     char delim_hori;
     char delim_vert;
     char delim_corner;
-    // space at boarder (all >= 0)
+    // space at border (all >= 0)
     int space_top;
     int space_bot;
     int space_left;
@@ -96,6 +100,8 @@ typedef struct node_ptr_to_window {
 // typedef in tui_lib.h
 struct screen {
     int id;
+    int height;
+    int width;
     Node_ptr_to_window *lowest;
 };
 
@@ -113,6 +119,7 @@ PRIVATE void window_remove_screen(Window window, Screen screen);
 PRIVATE void window_screen_list_destroy(Window window);
 PRIVATE void screen_remove_window_simple(Screen screen, Window window);
 PRIVATE int get_id(void);
+PRIVATE char **window_make_string(Window window, char fill_line, char fill_border);
 
 /********************************************************************
  * get_id: Returns a valid unique id.
@@ -236,7 +243,6 @@ PRIVATE void screen_remove_window_simple(Screen screen, Window window)
     free(p);
 }
 
-
 /********************************************************************
  * window_screen_list_destroy: So far only used in window_destroy().
  *                             Uses screen_remove_window_simple() to
@@ -317,9 +323,27 @@ Screen screen_create(void)
     MEM_TEST(new_screen);
 
     new_screen->id = id;
+    new_screen->height = 0;
+    new_screen->width = 0;
     new_screen->lowest = NULL;
 
     return new_screen;
+}
+
+/********************************************************************
+ * screen_set_size: Sets height and width of screen.
+ *                  Returns false if either either of the to size
+ *                  arguments is negative.
+ ********************************************************************/
+bool screen_set_size(Screen screen, int height, int width)
+{
+    if ((height < 0) || (width < 0))
+        return false;
+
+    screen->height = height;
+    screen->width = width;
+
+    return true;
 }
 
 /********************************************************************
@@ -559,7 +583,6 @@ void screen_destroy(Screen screen)
 //
 //
 //
-bool screen_draw(Screen screen, int height, int width);
 
 /********************************************************************
  * window_set_frame: Defines how the frame of a window is to be
@@ -572,9 +595,9 @@ bool screen_draw(Screen screen, int height, int width);
  *                   default for all three values is ' '
  *
  ********************************************************************/
-bool window_set_frame(Window window, char delim_hori, char delim_vert, char corner)
+bool window_set_frame(Window window, char delim_hori, char delim_vert, char delim_corner)
 {
-    if (!isprint(delim_hori) || !isprint(delim_vert) || !isprint(corner))
+    if (!isprint(delim_hori) || !isprint(delim_vert) || !isprint(delim_corner))
         return false;
     window->delim_hori = delim_hori;
     window->delim_vert = delim_vert;
@@ -585,18 +608,18 @@ bool window_set_frame(Window window, char delim_hori, char delim_vert, char corn
 
 /********************************************************************
  * window_set_space: Defines how much space should be left between
- *                   the windows content and it's boarder or it's
+ *                   the windows content and it's border or it's
  *                   frame if the latter is set to be displayed.
  ********************************************************************/
-bool window_set_space(Window window, int top, int, bot, int left, int right)
+bool window_set_space(Window window, int top, int bot, int left, int right)
 {
     if ((top < 0) || (bot < 0) || (left < 0) || (right < 0))
         return false;
 
-    window->top = top;
-    window->bot = bot;
-    window->left = left;
-    window->rigth = right;
+    window->space_top = top;
+    window->space_bot = bot;
+    window->space_left = left;
+    window->space_right = right;
     
     return true;
 }
@@ -652,7 +675,7 @@ bool screen_window_set_position(Screen screen, Window window, int pos_hori, int 
  * window_set_orientation: Defines the orientation with which the
  *                         content of a window will be displayed.
  *                         accepted arguments for orientation:
- *                         LEFT, CENTER, RIGHT
+ *                         1 = left, 2 = center, 3 = right
  ********************************************************************/
 bool window_set_orientation(Window window, Orientation orientation)
 {
@@ -704,7 +727,7 @@ bool window_update_content(Window window, char *content, int content_length)
  ********************************************************************/
 Window window_duplicate(Window window)
 {
-    duplicate_window = window_create(); // gives the duplicate a different id which is desired
+    Window duplicate_window = window_create(); // gives the duplicate a different id which is desired
 
     duplicate_window->height = window->height;
     duplicate_window->width = window->width;
@@ -713,7 +736,7 @@ Window window_duplicate(Window window)
     duplicate_window->delim_hori = window->delim_hori;
     duplicate_window->delim_vert = window->delim_vert;
     duplicate_window->delim_corner = window->delim_corner;
-    // space at boarder (all >= 0)
+    // space at border (all >= 0)
     duplicate_window->space_top = window->space_top;
     duplicate_window->space_bot = window->space_bot;
     duplicate_window->space_left = window->space_left;
@@ -722,7 +745,7 @@ Window window_duplicate(Window window)
     duplicate_window->content_orientation = window->content_orientation;
     duplicate_window->content_length = window->content_length;
     // +1 for '\0'
-    duplicate_window->content = malloc((duplicate_window->content_length + 1) * sizeof(duplicate_window->content));
+    duplicate_window->content = malloc((duplicate_window->content_length + 1) * sizeof(*duplicate_window->content));
     MEM_TEST(duplicate_window->content);
 
     strcpy(duplicate_window->content, window->content);
@@ -730,7 +753,122 @@ Window window_duplicate(Window window)
     return duplicate_window;
 }
 
+/*
 Screen screen_duplicate(Screen screen)
 {
     //Screen duplicate_screen = screen_create(void);
+}
+*/
+
+bool screen_draw(Screen screen);
+
+
+/********************************************************************
+ * window_print: Prints the content of a window wiht all specified
+ *               parameters.
+ ********************************************************************/
+void window_print(Window window, char fill_line, char fill_border)
+{
+    char **rows = window_make_string(window, fill_line, fill_border);
+    char **p;
+    for (p = rows; p < rows + window->height; p++)
+    {
+        puts(*p);
+        free(*p);
+    }
+    free(rows);
+}
+
+PRIVATE char **window_make_string(Window window, char fill_line, char fill_border)
+{
+    char **rows = malloc(window->height * sizeof(*rows));
+    MEM_TEST(rows);
+
+    char **current_row;
+    for (current_row = rows; current_row < rows + window->height; current_row++)
+    {
+        *current_row = malloc((window->width + 1) * sizeof(**current_row));
+        MEM_TEST(*current_row);
+    }
+
+    if (!isprint(fill_line))
+        fill_line = DEFAULT_FILL_LINE;
+
+    if (!isprint(fill_border))
+        fill_line = DEFAULT_FILL_BORDER;
+
+    bool content_end = false;
+    bool write = true;
+    char *p = window->content;
+    int i;
+
+    int top_space = window->space_top + window->display_frame;
+    int bot_space = window->space_bot + window->display_frame;
+    int left_space = window->space_left + window->display_frame;
+    int right_space = window->space_right + window->display_frame;
+
+    for (current_row = rows; current_row < rows + window->height; current_row++)
+    {
+        write = true;
+        for (i = 0; i < window->width; i++)
+        {
+            if (window->display_frame)
+            {
+                if ((current_row == rows) || (current_row == rows + window->height - 1))
+                {
+                    if ((0 == i) || (window->width - 1 == i))
+                        (*current_row)[i] = window->delim_corner;
+                    else
+                        (*current_row)[i] = window->delim_hori;
+                }
+                else if ((0 == i) || (window->width - 1 == i))
+                    (*current_row)[i] = window->delim_vert;
+            }
+            else if ((current_row <= rows + top_space)
+                  || (current_row >= rows + window->height - bot_space)
+                  || (i <= left_space)
+                  || (i >= window->width - right_space))
+                (*current_row)[i] = fill_border;
+
+            // there needs to be window->display_mode  normal | truncate | smart 
+            // implement it with typedef enum
+            // the following implements normal
+            
+            else if (write && !content_end)
+            {
+                if (*p++ == '\n')
+                {
+                    (*current_row)[i] = fill_line;
+                    write = false;
+                }
+                else if (*p++ = '\0')
+                {
+                    (*current_row)[i] = fill_line;
+                    content_end = true;
+                }
+                else
+                    (*current_row)[i] = *p++;
+            }
+            else
+                (*current_row)[i] = fill_line;
+        }
+        (*current_row)[++i] = '\0';
+        
+        // this part follows gets additionally executed, if instead of
+        // window->display_mode == normal, it is
+        // window->display_mode == truncate
+        // for now it just does not get executed
+        if (false)
+        {
+            while ((*p != '\n') && (*p != '\0'))
+                p++;
+            if ('\0' == *p)
+                content_end = true;
+            else
+                p++;
+        }
+        // missing is the implementation of window->display_mode == smart
+    }
+    
+    return rows;
 }

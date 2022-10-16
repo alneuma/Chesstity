@@ -40,7 +40,7 @@ struct window {
     int space_left;
     int space_right;
     // content variables
-    Orientation_i content_orientation;
+    int content_orientation;
     int content_length;
     char *content;
     Window_screen_list screens;
@@ -48,12 +48,16 @@ struct window {
 
 typedef struct node_ptr_to_window {
     int priority;
+    int pos_hori;
+    int pos_vert;
     Window window;
     struct node_ptr_to_window *next;
 } Node_ptr_to_window;
 
 struct screen {
     int id;
+    int height;
+    int width;
     Node_ptr_to_window *lowest;
 };
 
