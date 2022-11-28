@@ -37,6 +37,12 @@ typedef enum orientation {
     RIGHT = 3,
 } Orientation;
 
+typedef enum linebreak {
+    LB_NORMAL = 1,
+    LB_TRUNCATE = 2,
+    LB_SMART = 3,
+} Linebreak;
+
 /********************************************************************
  * window_create: every window is assigned a unique identifier
  *                when created. This is the way in which
@@ -95,6 +101,14 @@ void screen_destroy(Screen screen);
 //////////////////// below this line everything is untested //////////////////
 
 /********************************************************************
+ * screen_window_set_position: Sets the position of a window inside
+ *                             of a screen.
+ *                             Returns false if window is not in
+ *                             screen.
+ ********************************************************************/
+bool screen_window_set_position(Screen screen, Window window, int pos_hori, int pos_vert);
+
+/********************************************************************
  * window_set_frame: Defines how the frame of a window is to be
  *                   displayed.
  *                   Needs to be used in conjunction with
@@ -137,12 +151,17 @@ void window_display_frame(Window window, bool display);
 bool window_set_size(Window window, int height, int width);
 
 /********************************************************************
- * screen_window_set_position: Sets the position of a window inside
- *                             of a screen.
- *                             Returns false if window is not in
- *                             screen.
+ * window_set_linebreak: Specifies how linebreaks are handled inside
+ *                       of the window.
+ *                       LB_NORMAL = content-line continues at the
+ *                       next display-line
+ *                       LB_TRUNCATE = content-line gets truncated
+ *                       at the end of display-line
+ *                       LB_SMART = linebreak happens after the
+ *                       last word in a content-line, that fits onto
+ *                       a display-line
  ********************************************************************/
-bool screen_window_set_position(Screen screen, Window window, int pos_hori, int pos_vert);
+bool window_set_linebreak(Window window, Linebreak lb_mode);
 
 /********************************************************************
  * window_update_content: Rewrites the content (i.e. the string
@@ -152,6 +171,16 @@ bool screen_window_set_position(Screen screen, Window window, int pos_hori, int 
  *                        negative.
  ********************************************************************/
 bool window_update_content(Window window, char *content, int content_length);
+
+/********************************************************************
+ * window_set_fill: Sets a windows filler characters.
+ *                  fill_border = used to fill the space between the
+ *                  border of a window and the content.
+ *                  fill_line = used to fill the remaining positions
+ *                  in the content area when a line or the content
+ *                  ended.
+ ********************************************************************/
+bool window_set_fill(Window window, char fill_line, char fill_border);
 
 /********************************************************************
  * screen_duplicate: Creates a duplicate screen.
@@ -176,15 +205,18 @@ Window window_duplicate(Window window);
 //  Functions for output  //
 ////////////////////////////
 /********************************************************************
- * screen_draw: Prints all the windows in screen one over the other
- *              according to their priorities. Highest priority on
- *              top.
- *              This happens by creating and repeatedly modifying
- *              a string, which will be printed in the end.
- *              Returns false if height or width is a negative
- *              negative number.
+ * screen_print: Prints all the windows in screen one over the other
+ *               according to their priorities. Highest priority on
+ *               top.
+ *               This happens by creating and repeatedly modifying
+ *               a string, which will be printed in the end.
  ********************************************************************/
-bool screen_draw(Screen screen);
+void screen_print(Screen screen);
+
+/********************************************************************
+ * window_print_content: returns the id of the window.
+ ********************************************************************/
+void window_print_content(Window window);
 
 /********************************************************************
  * window_print: Prints the content of a window wiht all specified
@@ -193,5 +225,5 @@ bool screen_draw(Screen screen);
  *               display_modes
  *               orientation
  ********************************************************************/
-void window_print(Window window, char fill_line, char fill_border);
+void window_print(Window window);
 #endif

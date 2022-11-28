@@ -43,14 +43,21 @@
 // Denotes the maximum number of windows/screens, that can exist at the same time.
 // Keeps track of the amount of created windows/screens. Assigns a unique id to each window/screen.
 #define MAX_WINDOWS_SCREENS_ID INT_MAX
-#define DEFAULT_FILL_LINE ' '
-#define DEFAULT_FILL_BORDER ' '
+
+#define MIN(x, y) (((x) <= (y)) ? (x) : (y))
+#define MAX(x, y) (((x) >= (y)) ? (x) : (y))
 
 typedef enum orientation_i {
     LEFT_i = 1,
     CENTER_i = 2,
     RIGHT_i = 3,
 } Orientation_i;
+
+typedef enum linebreak_i {
+    LB_NORMAL_i = 1,
+    LB_TRUNCATE_i = 2,
+    LB_SMART_i = 3,
+} Linebreak_i;
 
 // nodes of Window_screen_list, see below
 typedef struct node_ptr_to_screen {
@@ -76,6 +83,9 @@ struct window {
     char delim_hori;
     char delim_vert;
     char delim_corner;
+    // filler variables
+    char fill_line;
+    char fill_border;
     // space at border (all >= 0)
     int space_top;
     int space_bot;
@@ -83,8 +93,13 @@ struct window {
     int space_right;
     // content variables
     Orientation_i content_orientation;
+    Linebreak_i content_lb_mode;
     int content_length;
     char *content;
+    // display_strings;
+    char **display_strings;
+    bool changed;
+    int old_height;
     Window_screen_list screens;
 };
 
@@ -102,6 +117,10 @@ struct screen {
     int id;
     int height;
     int width;
+    char background;
+    bool changed;
+    int old_height;
+    char **display_strings;
     Node_ptr_to_window *lowest;
 };
 
@@ -119,7 +138,10 @@ PRIVATE void window_remove_screen(Window window, Screen screen);
 PRIVATE void window_screen_list_destroy(Window window);
 PRIVATE void screen_remove_window_simple(Screen screen, Window window);
 PRIVATE int get_id(void);
-PRIVATE char **window_make_string(Window window, char fill_line, char fill_border);
+PRIVATE char **window_make_strings(Window window);
+PRIVATE void window_update_strings(Window window);
+PRIVATE char **screen_make_strings(Screen screen);
+PRIVATE void screen_update_strings(Screen screen);
 
 /********************************************************************
  * get_id: Returns a valid unique id.
@@ -185,13 +207,19 @@ Window window_create(void)
     new_window->delim_hori = ' ';
     new_window->delim_vert = ' ';
     new_window->delim_corner = ' ';
+    new_window->fill_line = ' ';
+    new_window->fill_border = ' ';
     new_window->content_orientation = LEFT_i;
+    Linebreak_i content_lb_mode = LB_NORMAL_i;
     new_window->content_length = 0;
     // +1 for '\0'
-    new_window->content = malloc((new_window->content_length + 1) * sizeof(*new_window->content));
+    new_window->content = malloc((new_window->content_length) * sizeof(*new_window->content));
     MEM_TEST(new_window->content);
+    *(new_window->content + new_window->content_length) = '\0';
 
-    *(new_window->content + 1) = '\0';
+    new_window->display_strings = window_make_strings(new_window);
+    new_window->changed = false;
+    new_window->old_height = 0;
 
     new_window->screens = screen_list_create();
 
@@ -241,6 +269,8 @@ PRIVATE void screen_remove_window_simple(Screen screen, Window window)
         screen->lowest = p->next;
 
     free(p);
+
+    screen->changed = true;
 }
 
 /********************************************************************
@@ -326,8 +356,22 @@ Screen screen_create(void)
     new_screen->height = 0;
     new_screen->width = 0;
     new_screen->lowest = NULL;
+    new_screen->background = ' ';
+
+    new_screen->changed = false;
+    new_screen->old_height = 0;
+    new_screen->display_strings = NULL;
 
     return new_screen;
+}
+
+bool screen_set_background(Screen screen, char background)
+{
+    if (!isprint(background))
+        return false;
+
+    screen->background = background;
+    screen->changed = true;
 }
 
 /********************************************************************
@@ -340,8 +384,10 @@ bool screen_set_size(Screen screen, int height, int width)
     if ((height < 0) || (width < 0))
         return false;
 
+    screen->old_height = screen->height;
     screen->height = height;
     screen->width = width;
+    screen->changed = true;
 
     return true;
 }
@@ -498,6 +544,7 @@ bool screen_add_window(Screen screen, Window window, int priority)
         old_position->priority = priority;
     }
 
+    screen->changed = true;
     return true;
 }
 
@@ -523,6 +570,7 @@ bool screen_remove_window(Screen screen, Window window)
             // remove screen from window
             window_remove_screen(window, screen);
             free(p);
+            screen->changed = true;
             return true;
         }
         p_prev = p;
@@ -546,6 +594,15 @@ void window_destroy(Window window)
     stack_int_push(returned_ids, window->id);
     window_screen_list_destroy(window);
     free(window->content);
+
+    for (char **p = window->display_strings;
+            p < window->display_strings + ((window->changed) ? window->old_height : window->height);
+            p++)
+    {
+        free(*p);
+    }
+    free(window->display_strings);
+
     free(window);
 }
 
@@ -573,16 +630,18 @@ void screen_destroy(Screen screen)
         free(temp);
     }
 
+    if (NULL != screen->display_strings)
+    {
+        for (char **p = screen->display_strings;
+                p < screen->display_strings + (screen->changed ? screen->old_height : screen->height);
+                p++)
+        {
+            free(*p);
+        }
+        free(screen->display_strings);
+    }
     free(screen);
 }
-
-//
-//
-//
-// functions below this line are not ready for testing yet
-//
-//
-//
 
 /********************************************************************
  * window_set_frame: Defines how the frame of a window is to be
@@ -603,6 +662,8 @@ bool window_set_frame(Window window, char delim_hori, char delim_vert, char deli
     window->delim_vert = delim_vert;
     window->delim_corner = delim_corner;
 
+    window->changed = true;
+
     return true;
 }
 
@@ -621,6 +682,8 @@ bool window_set_space(Window window, int top, int bot, int left, int right)
     window->space_left = left;
     window->space_right = right;
     
+    window->changed = true;
+
     return true;
 }
 
@@ -631,6 +694,8 @@ bool window_set_space(Window window, int top, int bot, int left, int right)
  ********************************************************************/
 void window_display_frame(Window window, bool display)
 {
+    window->changed = true;
+
     window->display_frame = display;
 }
 
@@ -643,9 +708,35 @@ bool window_set_size(Window window, int height, int width)
 {
     if ((height < 0) || (width < 0))
         return false;
-
+ 
+    window->old_height = window->height;
     window->height = height;
     window->width = width;
+
+    window->changed = true;
+
+    return true;
+}
+
+/********************************************************************
+ * window_set_linebreak: Specifies how linebreaks are handled inside
+ *                       of the window.
+ *                       LB_NORMAL_i = content-line continues at the
+ *                       next display-line
+ *                       LB_TRUNCATE_i = content-line gets truncated
+ *                       at the end of display-line
+ *                       LB_SMART_i = linebreak happens after the
+ *                       last word in a content-line, that fits onto
+ *                       a display-line
+ ********************************************************************/
+bool window_set_linebreak(Window window, Linebreak lb_mode)
+{
+    if ((LB_NORMAL_i != lb_mode) && (LB_TRUNCATE_i != lb_mode) && (LB_SMART_i != lb_mode))
+        return false;
+
+    window->content_lb_mode = lb_mode;
+
+    window->changed = true;
 
     return true;
 }
@@ -667,6 +758,7 @@ bool screen_window_set_position(Screen screen, Window window, int pos_hori, int 
             p->pos_vert = pos_vert;
             return true;
         }
+        p = p->next;
     }
     return false;
 }
@@ -683,6 +775,29 @@ bool window_set_orientation(Window window, Orientation orientation)
         return false;
 
     window->content_orientation = orientation;
+
+    window->changed = true;
+
+    return true;
+}
+
+/********************************************************************
+ * window_set_fill: Sets a windows filler characters.
+ *                  fill_border = used to fill the space between the
+ *                  border of a window and the content.
+ *                  fill_line = used to fill the remaining positions
+ *                  in the content area when a line or the content
+ *                  ended.
+ ********************************************************************/
+bool window_set_fill(Window window, char fill_line, char fill_border)
+{
+    if ((!isprint(fill_line)) || (!isprint(fill_border)))
+        return false;
+
+    window->fill_line = fill_line;
+    window->fill_border = fill_border;
+
+    window->changed = true;
 
     return true;
 }
@@ -713,6 +828,8 @@ bool window_update_content(Window window, char *content, int content_length)
         window->content[i] = content[i];
     window->content[content_length] = '\0';
 
+    window->changed = true;
+
     return true;
 }
 
@@ -736,6 +853,9 @@ Window window_duplicate(Window window)
     duplicate_window->delim_hori = window->delim_hori;
     duplicate_window->delim_vert = window->delim_vert;
     duplicate_window->delim_corner = window->delim_corner;
+    // fillers
+    duplicate_window->fill_line = window->fill_line;
+    duplicate_window->fill_border = window->fill_border;
     // space at border (all >= 0)
     duplicate_window->space_top = window->space_top;
     duplicate_window->space_bot = window->space_bot;
@@ -743,12 +863,17 @@ Window window_duplicate(Window window)
     duplicate_window->space_right = window->space_right;
     // content variables
     duplicate_window->content_orientation = window->content_orientation;
+    duplicate_window->content_lb_mode = window->content_lb_mode;
     duplicate_window->content_length = window->content_length;
     // +1 for '\0'
     duplicate_window->content = malloc((duplicate_window->content_length + 1) * sizeof(*duplicate_window->content));
     MEM_TEST(duplicate_window->content);
 
     strcpy(duplicate_window->content, window->content);
+
+    duplicate_window->display_strings = window_make_strings(duplicate_window);
+    duplicate_window->changed = false;
+    duplicate_window->old_height = window->old_height;
 
     return duplicate_window;
 }
@@ -762,24 +887,148 @@ Screen screen_duplicate(Screen screen)
 
 bool screen_draw(Screen screen);
 
-
 /********************************************************************
  * window_print: Prints the content of a window wiht all specified
  *               parameters.
  ********************************************************************/
-void window_print(Window window, char fill_line, char fill_border)
+void window_print(Window window)
 {
-    char **rows = window_make_string(window, fill_line, fill_border);
-    char **p;
-    for (p = rows; p < rows + window->height; p++)
+    window_update_strings(window);
+
+    char **p = window->display_strings;
+    for (p = window->display_strings; p < window->display_strings + window->height; p++)
     {
         puts(*p);
-        free(*p);
     }
-    free(rows);
 }
 
-PRIVATE char **window_make_string(Window window, char fill_line, char fill_border)
+/********************************************************************
+ * screen_print: Prints updates a screen if necessary and then
+ *               prints it.
+ ********************************************************************/
+void screen_print(Screen screen)
+{
+    screen_update_strings(screen);
+
+    char **p = screen->display_strings;
+    for (p = screen->display_strings; p < screen->display_strings + screen->height; p++)
+    {
+        puts(*p);
+    }
+}
+
+/********************************************************************
+ * window_update_strings: updated window->display_strings should
+ *                        be called, before window gets printed
+ *                        or written to a screen, if 
+ *                        window->changed is true
+ ********************************************************************/
+PRIVATE void window_update_strings(Window window)
+{
+    if (window->changed)
+    {
+        for (char **p = window->display_strings; p < window->display_strings + window->old_height; p++)
+        {
+            free(*p);
+        }
+        free(window->display_strings);
+
+        window->display_strings = window_make_strings(window);
+        window->changed = false;
+    }
+}
+
+PRIVATE void screen_update_strings(Screen screen)
+{
+    if (screen->changed)
+    {
+        if (NULL != screen->display_strings)
+        {
+            for (char **p = screen->display_strings; p < screen->display_strings + screen->old_height; p++)
+            {
+                free(*p);
+            }
+            free(screen->display_strings);
+        }
+
+        screen->display_strings = screen_make_strings(screen);
+        screen->changed = false;
+    }
+}
+
+PRIVATE char **screen_make_strings(Screen screen)
+{
+    char **screen_rows = malloc(screen->height * sizeof(*screen_rows));
+    MEM_TEST(screen_rows);
+
+    char **screen_current_row;
+    char *screen_current_col;
+    for (screen_current_row = screen_rows;
+         screen_current_row < screen_rows + screen->height;
+         screen_current_row++)
+    {
+        *screen_current_row = malloc((screen->width + 1) * sizeof(**screen_current_row));
+        MEM_TEST(*screen_current_row);
+
+        for (screen_current_col = *screen_current_row;
+             screen_current_col < *screen_current_row + screen->width;
+             screen_current_col++)
+            *screen_current_col = screen->background;
+
+        *screen_current_col = '\0';
+    }
+
+
+    int window_beg_row;         // the first row in windows strings which will be displayed on screen
+    int screen_beg_row;         // the first row in screen strings on which will be written
+    int screen_end_row;         // the last row in screen strings on which will be written
+    int window_beg_col;         // the first column in windows strings which will be displayed on screen
+    int screen_beg_col;         // the first column in screen strings on which will be written
+    int screen_end_col;         // the last column in screen strings on which will be written
+
+    char **window_current_row;
+    char *window_current_col;
+    
+    Node_ptr_to_window *p = screen->lowest;
+    while (NULL != p)
+    {
+        if ((p->pos_hori > (screen->height - 1))
+         || (p->pos_vert > (screen->width - 1))
+         || (p->pos_hori + p->window->height - 1 < 0)
+         || (p->pos_vert + p->window->width - 1 < 0))
+            continue;
+
+        window_update_strings(p->window);
+
+        window_beg_row = (p->pos_hori >= 0) ? 0 : -(p->pos_hori);
+        window_beg_col = (p->pos_vert >= 0) ? 0 : -(p->pos_vert);
+        screen_beg_row = (p->pos_hori >= 0) ? p->pos_hori : 0;
+        screen_beg_col = (p->pos_vert >= 0) ? p->pos_vert : 0;
+        screen_end_row = MIN(p->pos_hori + p->window->height - 1, screen->height - 1);
+        screen_end_col = MIN(p->pos_vert + p->window->width - 1, screen->width - 1);
+
+        // fill in window
+        for (screen_current_row = screen_rows + screen_beg_row,
+             window_current_row = p->window->display_strings + window_beg_row;
+             screen_current_row <= screen_rows + screen_end_row;
+             screen_current_row++, window_current_row++)
+        {
+            for (screen_current_col = *screen_current_row + screen_beg_col,
+                 window_current_col = *window_current_row + window_beg_col;
+                 screen_current_col <= *screen_current_row + screen_end_col;
+                 screen_current_col++, window_current_col++)
+            {
+                *screen_current_col = *window_current_col;
+            }
+        }
+        
+        p = p->next;
+    }
+
+    return screen_rows;
+}
+
+PRIVATE char **window_make_strings(Window window)
 {
     char **rows = malloc(window->height * sizeof(*rows));
     MEM_TEST(rows);
@@ -790,12 +1039,6 @@ PRIVATE char **window_make_string(Window window, char fill_line, char fill_borde
         *current_row = malloc((window->width + 1) * sizeof(**current_row));
         MEM_TEST(*current_row);
     }
-
-    if (!isprint(fill_line))
-        fill_line = DEFAULT_FILL_LINE;
-
-    if (!isprint(fill_border))
-        fill_line = DEFAULT_FILL_BORDER;
 
     bool content_end = false;
     bool write = true;
@@ -812,23 +1055,34 @@ PRIVATE char **window_make_string(Window window, char fill_line, char fill_borde
         write = true;
         for (i = 0; i < window->width; i++)
         {
-            if (window->display_frame)
+            if ((current_row <= rows + top_space - 1)
+             || (current_row >= rows + window->height - bot_space)
+             || (i <= left_space - 1)
+             || (i >= window->width - right_space))
             {
-                if ((current_row == rows) || (current_row == rows + window->height - 1))
+                if (window->display_frame)
                 {
-                    if ((0 == i) || (window->width - 1 == i))
-                        (*current_row)[i] = window->delim_corner;
-                    else
-                        (*current_row)[i] = window->delim_hori;
+                    if ((current_row == rows) || (current_row == rows + window->height - 1))
+                    {
+                        if ((0 == i) || (window->width - 1 == i))
+                        {
+                            (*current_row)[i] = window->delim_corner;
+                            continue;
+                        }
+                        else
+                        {
+                            (*current_row)[i] = window->delim_hori;
+                            continue;
+                        }
+                    }
+                    else if ((0 == i) || (window->width - 1 == i))
+                    {
+                        (*current_row)[i] = window->delim_vert;
+                        continue;
+                    }
                 }
-                else if ((0 == i) || (window->width - 1 == i))
-                    (*current_row)[i] = window->delim_vert;
+                (*current_row)[i] = window->fill_border;
             }
-            else if ((current_row <= rows + top_space)
-                  || (current_row >= rows + window->height - bot_space)
-                  || (i <= left_space)
-                  || (i >= window->width - right_space))
-                (*current_row)[i] = fill_border;
 
             // there needs to be window->display_mode  normal | truncate | smart 
             // implement it with typedef enum
@@ -836,37 +1090,43 @@ PRIVATE char **window_make_string(Window window, char fill_line, char fill_borde
             
             else if (write && !content_end)
             {
-                if (*p++ == '\n')
+                if (*p == '\n')
                 {
-                    (*current_row)[i] = fill_line;
+                    (*current_row)[i] = window->fill_line;
                     write = false;
+                    p++;
                 }
-                else if (*p++ = '\0')
+                else if (*p == '\0')
                 {
-                    (*current_row)[i] = fill_line;
+                    (*current_row)[i] = window->fill_line;
                     content_end = true;
                 }
                 else
                     (*current_row)[i] = *p++;
             }
             else
-                (*current_row)[i] = fill_line;
+                (*current_row)[i] = window->fill_line;
+
+            // this truncates is used for window->display_mode == truncate
+            if ((LB_TRUNCATE_i == window->content_lb_mode)
+                 && write && !content_end
+                          && (current_row >= rows + top_space)
+                          && (i == window->width - right_space))
+            {
+                while ((*p != '\n') && (*p != '\0'))
+                    p++;
+                if ('\0' == *p)
+                    content_end = true;
+                else
+                    p++;
+            }
         }
-        (*current_row)[++i] = '\0';
+        (*current_row)[i] = '\0';
         
         // this part follows gets additionally executed, if instead of
         // window->display_mode == normal, it is
         // window->display_mode == truncate
         // for now it just does not get executed
-        if (false)
-        {
-            while ((*p != '\n') && (*p != '\0'))
-                p++;
-            if ('\0' == *p)
-                content_end = true;
-            else
-                p++;
-        }
         // missing is the implementation of window->display_mode == smart
     }
     

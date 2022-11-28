@@ -60,6 +60,18 @@ enum letter_piece
 #endif
 
 /********************************************************************
+ * san_to_move: converts a null-terminated string in SAN (standard
+ *              algebraic notation) into a move.
+ *              Returns
+ *              { {-1,-1}, {0,0} } if move is ambigious or
+ *              { {-1,-1}, {1,1} } if move is illegal
+ *              Does not error-check. Correct format is assumed.
+ *              !!!! draw claim/proposal and pawn creation not included
+ *              (also not in input)
+ ********************************************************************/
+Move san_to_move(const char *san, const Game game);
+
+/********************************************************************
  * create_game: Creates a Game object.                              *
  *              Returns NULL on failure.                            *
  ********************************************************************/

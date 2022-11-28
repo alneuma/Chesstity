@@ -8,8 +8,9 @@
 /* options (uncomment to activate) */
 //#define TEST_CORE_FUNCTIONS_H
 //#define TEST_CORE_INTERFACE_H
-#define TEST_DS_LIB_H
-#define TEST_TUI_LIB_H
+//#define TEST_DS_LIB_H
+//#define TEST_TUI_LIB_H
+#define TEST_GRAPHIC_OUTPUT_H
 
 /* include directives */
 #include "test-framework/unity/unity.h"
@@ -2037,7 +2038,7 @@ void test_screen_remove_window_03(void)
     free(ids_w1);
 }
 
-void test_window_print_01(void)
+void test_window_print_01_lb_normal_and_lb_truncate_01(void)
 {
     Window w = window_create();
     char *str = "Hello my name is this and that, and other things\nNow we are talking!\n";
@@ -2046,9 +2047,91 @@ void test_window_print_01(void)
     window_display_frame(w, true);
     window_set_space(w, 1, 1, 2, 2);
     window_set_size(w, 20, 40);
-    window_print(w, ' ', ' ');
-    TEST_ASSERT_TRUE(false);
+    //window_print(w);
+    TEST_ASSERT_TRUE(true);
     window_destroy(w);
+}
+
+void test_window_print_02_lb_normal_and_lb_truncate_02(void)
+{
+    Window w = create_test_window(20, 40);
+    window_print(w);
+    TEST_ASSERT_TRUE(true);
+    window_destroy(w);
+}
+
+void test_screen_print_multiple_windows_01(void)
+{
+    Screen s = screen_create();
+    Window w0 = window_create();
+    window_set_frame(w0, '=', '|', 'O');
+    window_display_frame(w0, true);
+    window_set_fill(w0, '.', '#');
+    window_set_space(w0, 0, 0, 0, 0);
+
+    Window w1 = create_test_window(20, 40);
+    Window w2 = create_test_window(10, 20);
+
+    screen_set_size(s, 36, 120);
+    window_set_size(w0, 36, 120);
+    screen_add_window(s, w0, 0);
+    screen_add_window(s, w1, 0);
+    screen_add_window(s, w2, 0);
+    screen_window_set_position(s, w1, 5, 5);
+    screen_window_set_position(s, w2, 3, 70);
+
+    screen_print(s);
+
+    TEST_ASSERT_TRUE(true);
+
+    window_destroy(w2);
+    window_destroy(w1);
+    screen_destroy(s);
+}
+#endif
+
+#ifdef TEST_GRAPHIC_OUTPUT_H
+void test_write_current_board_01(void)
+{
+    Game game = create_game();
+    char str[100000];
+    write_current_board(str, game, WHITE);
+    printf(str);
+    TEST_ASSERT_TRUE(true);
+
+    destroy_game(game);
+}
+
+void test_write_current_board_02(void)
+{
+    Game game = create_game();
+    char str[100000];
+    write_current_board(str, game, BLACK);
+    printf(str);
+    TEST_ASSERT_TRUE(true);
+
+    destroy_game(game);
+}
+
+void test_board_window_01(void)
+{
+    Game game = create_game();
+    Screen s = screen_create();
+    Window w = window_create();
+    window_set_frame(w, '*', '*', '*');
+    window_set_space(w, 0, 0, 1, 1);
+    window_display_frame(w, true);
+    window_set_linebreak(w, LB_TRUNCATE);
+    char board[10000];
+    write_current_board(board, game, WHITE);
+    window_update_content(w, board, 10000);
+    window_set_size(w, 30, 57);
+    window_print(w);
+    TEST_ASSERT_TRUE(true);
+
+    destroy_game(game);
+    window_destroy(w);
+    screen_destroy(s);
 }
 
 #endif
@@ -2169,7 +2252,15 @@ int main(void)
     RUN_TEST(test_screen_remove_window_01);
     RUN_TEST(test_screen_remove_window_02);
     RUN_TEST(test_screen_remove_window_03);
-    RUN_TEST(test_window_print_01);
+    RUN_TEST(test_window_print_01_lb_normal_and_lb_truncate_01);
+    RUN_TEST(test_window_print_02_lb_normal_and_lb_truncate_02);
+    RUN_TEST(test_screen_print_multiple_windows_01);
+    #endif
+
+    #ifdef TEST_GRAPHIC_OUTPUT_H
+    RUN_TEST(test_write_current_board_01);
+    RUN_TEST(test_write_current_board_02);
+    RUN_TEST(test_board_window_01);
     #endif
 
     return UNITY_END();

@@ -10,6 +10,18 @@
 #include <stdbool.h>
 
 /********************************************************************
+ * create_test_window: Creates a test window with specified size
+ *                     and content.
+ ********************************************************************/
+Screen create_test_screen(int height, int width, char background);
+
+/********************************************************************
+ * create_test_window: Creates a test window with specified size
+ *                     and content.
+ ********************************************************************/
+Window create_test_window(int height, int width);
+
+/********************************************************************
  * screen_print_info: Prints id and priority of all windows in
  *                    screen.
  ********************************************************************/
@@ -30,11 +42,6 @@ int screen_id(Screen screen);
  * window_id: returns the id of the window.
  ********************************************************************/
 int window_id(Window window);
-
-/********************************************************************
- * window_print_content: returns the id of the window.
- ********************************************************************/
-void window_print_content(Window window);
 
 /********************************************************************
  * screen_windows_id: Returns a pointer to an array that contains

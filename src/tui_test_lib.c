@@ -34,6 +34,9 @@ struct window {
     char delim_hori;
     char delim_vert;
     char delim_corner;
+    // filler variables
+    char fill_line;
+    char fill_border;
     // space at boarder (all >= 0)
     int space_top;
     int space_bot;
@@ -41,8 +44,13 @@ struct window {
     int space_right;
     // content variables
     int content_orientation;
+    int content_lb_mode;
     int content_length;
     char *content;
+    // display_strings;
+    char **display_strings;
+    bool changed;
+    int old_height;
     Window_screen_list screens;
 };
 
@@ -58,10 +66,42 @@ struct screen {
     int id;
     int height;
     int width;
+    char background;
+    bool changed;
+    int old_height;
+    char **display_strings;
     Node_ptr_to_window *lowest;
 };
 
 PRIVATE int compare_ints(const void *a, const void *b);
+
+/********************************************************************
+ * create_test_window: Creates a test window with specified size
+ *                     and content.
+ ********************************************************************/
+Screen create_test_screen(int height, int width, char background)
+{
+    Screen s = screen_create();
+    screen_set_size(s, height, width);
+    screen_set_background(s, background);
+    return s;
+}
+
+/********************************************************************
+ * create_test_window: Creates a test window with specified size
+ *                     and content.
+ ********************************************************************/
+Window create_test_window(int height, int width)
+{
+    Window w = window_create();
+    char str[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    window_update_content(w, str, strlen(str));
+    window_set_frame(w, '=', '|', 'O');
+    window_display_frame(w, true);
+    window_set_space(w, 1, 1, 2, 2);
+    window_set_size(w, height, width);
+    return w;
+}
 
 /********************************************************************
  * screen_print_info: Prints id and priority of all windows in
