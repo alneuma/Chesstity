@@ -62,6 +62,7 @@ PRIVATE Letter_piece piece_to_letter_interf(const Piece_i *piece);
  *              !!!! draw claim/proposal and pawn creation not included
  *              (also not in input)
  ********************************************************************/
+/*
 Move san_to_move(const char *san, const Game game)
 {
     Square_i destination;
@@ -103,6 +104,7 @@ Move san_to_move(const char *san, const Game game)
         // no pawn
     }
 }
+*/
 
 /********************************************************************
  * create_game: Creates a Game object, which is a linked list, with *

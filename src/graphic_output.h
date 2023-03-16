@@ -27,6 +27,6 @@ void write_current_board(char *dest, Game game, Color orientation);
 /********************************************************************
  * display_game_screen: Displays the games main screen.
  ********************************************************************/
-void display_game_screen(game);
+void display_game_screen(Game game);
 
 #endif

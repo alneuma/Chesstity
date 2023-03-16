@@ -10,8 +10,8 @@ CFLAGS += -Wpedantic
 CFLAGS += -DUNITY_SUPPORT_64 -DUNITY_OUTPUT_COLOR
 
 objects = main.o graphic_output.o core_functions.o core_interface.o
-objects_test = tui_lib.o test_chess.o tui_test_lib.o ds_lib.o chess_test_creator.o core_functions.o unity.o graphic_output.o core_interface.o
-headers_test = tui_lib.h tui_test_lib.h ds_lib.h chess_test_creator.h core_functions.h core_interface.h test-framework/unity/unity.h test-framework/unity/unity_chess_extension.h graphic_output.h
+objects_test = tui_lib.o test_chess.o tui_test_lib.o ds_lib.o chess_test_creator.o core_functions.o unity.o graphic_output.o core_interface.o input.o san_parsing.o
+headers_test = tui_lib.h tui_test_lib.h ds_lib.h chess_test_creator.h core_functions.h core_interface.h test-framework/unity/unity.h test-framework/unity/unity_chess_extension.h graphic_output.h input.h san_parsing.h
 
 ### main target
 chess.x: $(objects) chess_test_creator.o
@@ -28,6 +28,12 @@ core_functions.o: core_functions.c core_functions.h
 	
 graphic_output.o: graphic_output.c core_functions.h graphic_output.h
 	cc $(CFLAGS) -c graphic_output.c -o graphic_output.o $(LIBS)
+
+input.o: input.c
+	cc $(CFLAGS) -c input.c -o input.o $(LIBS)
+
+san_parsing.o: san_parsing.c
+	cc $(CFLAGS) -c san_parsing.c -o san_parsing.o $(LIBS)
 
 ds_lib.o: ds_lib.c ds_lib.h mem_utilities.h
 	cc $(CFLAGS) -c ds_lib.c -o ds_lib.o $(LIBS)

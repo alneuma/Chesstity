@@ -431,7 +431,7 @@ bool screen_add_window(Screen screen, Window window, int priority)
     // where the node pointing to window will point to with ->next.
     // new_position_prev will point to the node,
     // that will point with ->next to the node pointing to window.
-    // old_position will end up pinting to the node.
+    // old_position will end up pointing to the node.
     // that points to window.
     // old_position_prev will point to the node,
     // before the node that is pointed to by old_position.
@@ -888,7 +888,7 @@ Screen screen_duplicate(Screen screen)
 bool screen_draw(Screen screen);
 
 /********************************************************************
- * window_print: Prints the content of a window wiht all specified
+ * window_print: Prints the content of a window with all specified
  *               parameters.
  ********************************************************************/
 void window_print(Window window)
@@ -903,7 +903,7 @@ void window_print(Window window)
 }
 
 /********************************************************************
- * screen_print: Prints updates a screen if necessary and then
+ * screen_print: Updates a screen if necessary and then
  *               prints it.
  ********************************************************************/
 void screen_print(Screen screen)
@@ -918,7 +918,7 @@ void screen_print(Screen screen)
 }
 
 /********************************************************************
- * window_update_strings: updated window->display_strings should
+ * window_update_strings: updates window->display_strings should
  *                        be called, before window gets printed
  *                        or written to a screen, if 
  *                        window->changed is true
@@ -977,7 +977,6 @@ PRIVATE char **screen_make_strings(Screen screen)
 
         *screen_current_col = '\0';
     }
-
 
     int window_beg_row;         // the first row in windows strings which will be displayed on screen
     int screen_beg_row;         // the first row in screen strings on which will be written

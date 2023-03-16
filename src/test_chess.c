@@ -1,16 +1,19 @@
-/* IMPORTANT:
- * For tests to work #define DEBUG in the following files:
- * core_functions.c
- * core_interface.c
- * core_interface.h
- */
+// IMPORTANT:
+// For tests to work #define DEBUG in the following files:
+// core_functions.c
+// core_interface.c
+// core_interface.h
 
-/* options (uncomment to activate) */
-//#define TEST_CORE_FUNCTIONS_H
-//#define TEST_CORE_INTERFACE_H
-//#define TEST_DS_LIB_H
-//#define TEST_TUI_LIB_H
-#define TEST_GRAPHIC_OUTPUT_H
+///////////////////////////////////////////////
+// options: uncomment to test specified modules
+///////////////////////////////////////////////
+// #define TEST_CORE_FUNCTIONS_H
+// #define TEST_CORE_INTERFACE_H
+// #define TEST_DS_LIB_H
+// #define TEST_TUI_LIB_H
+// #define TEST_GRAPHIC_OUTPUT_H
+// #define TEST_INPUT_H
+#define TEST_SAN_PARSING_H
 
 /* include directives */
 #include "test-framework/unity/unity.h"
@@ -23,6 +26,8 @@
 #include "core_interface.h"
 #include "ds_lib.h"
 #include "tui_lib.h"
+#include "input.h"
+#include "san_parsing.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -2071,19 +2076,23 @@ void test_screen_print_multiple_windows_01(void)
 
     Window w1 = create_test_window(20, 40);
     Window w2 = create_test_window(10, 20);
+    Window w3 = create_test_window(15, 30);
 
     screen_set_size(s, 36, 120);
     window_set_size(w0, 36, 120);
     screen_add_window(s, w0, 0);
     screen_add_window(s, w1, 0);
     screen_add_window(s, w2, 0);
+    screen_add_window(s, w3, 0);
     screen_window_set_position(s, w1, 5, 5);
     screen_window_set_position(s, w2, 3, 70);
+    screen_window_set_position(s, w3, 26, 94);
 
     screen_print(s);
 
     TEST_ASSERT_TRUE(true);
 
+    window_destroy(w3);
     window_destroy(w2);
     window_destroy(w1);
     screen_destroy(s);
@@ -2136,11 +2145,241 @@ void test_board_window_01(void)
 
 #endif
 
+#ifdef TEST_INPUT_H
+void test_read_input(void)
+{
+    char *line = read_input();
+    puts(line);
+
+    TEST_ASSERT_TRUE(true);
+    free(line);
+}
+#endif
+
+#ifdef TEST_SAN_PARSING_H
+void test_remove_whitespace_01(void)
+{
+    char test_string[] = "test";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test",test_string);
+}
+
+void test_remove_whitespace_02(void)
+{
+    char test_string[] = "";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("",test_string);
+}
+
+void test_remove_whitespace_03(void)
+{
+    char test_string[] = "   ";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("",test_string);
+}
+
+void test_remove_whitespace_04(void)
+{
+    char test_string[] = "   test";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test",test_string);
+}
+
+void test_remove_whitespace_05(void)
+{
+    char test_string[] = "test  ";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test",test_string);
+}
+
+void test_remove_whitespace_06(void)
+{
+    char test_string[] = " test ";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test",test_string);
+}
+
+void test_remove_whitespace_07(void)
+{
+    char test_string[] = " test test toast ";
+    remove_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test test toast",test_string);
+}
+
+void test_get_san_type_pawn_01(void)
+{
+    char test_string[] = "e4";
+    TEST_ASSERT_EQUAL_INT(PAWN_MOVE, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_02(void)
+{
+    char test_string[] = "exf3";
+    TEST_ASSERT_EQUAL_INT(PAWN_CAPTURE, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_03(void)
+{
+    char test_string[] = "exf8=Q";
+    TEST_ASSERT_EQUAL_INT(PAWN_CAPTURE_PROMOTE, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_04(void)
+{
+    char test_string[] = "e1=N";
+    TEST_ASSERT_EQUAL_INT(PAWN_MOVE_PROMOTE, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_invalid_05(void)
+{
+    char test_string[] = "ex";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_invalid_06(void)
+{
+    char test_string[] = "exa4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_invalid_07(void)
+{
+    char test_string[] = "exf8";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_invalid_08(void)
+{
+    char test_string[] = "exf8=";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_pawn_invalid_09(void)
+{
+    char test_string[] = "exf8=P";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_01(void)
+{
+    char test_string[] = "Qa4";
+    TEST_ASSERT_EQUAL_INT(PIECE_MOVE, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_02(void)
+{
+    char test_string[] = "Qda4";
+    TEST_ASSERT_EQUAL_INT(PIECE_MOVE_FILE, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_03(void)
+{
+    char test_string[] = "Q2a4";
+    TEST_ASSERT_EQUAL_INT(PIECE_MOVE_RANK, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_04(void)
+{
+    char test_string[] = "Qd1a4";
+    TEST_ASSERT_EQUAL_INT(PIECE_MOVE_BOTH, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_05(void)
+{
+    char test_string[] = "Qxa4";
+    TEST_ASSERT_EQUAL_INT(PIECE_CAPTURE, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_06(void)
+{
+    char test_string[] = "Qdxa4";
+    TEST_ASSERT_EQUAL_INT(PIECE_CAPTURE_FILE, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_07(void)
+{
+    char test_string[] = "Q2xa4";
+    TEST_ASSERT_EQUAL_INT(PIECE_CAPTURE_RANK, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_08(void)
+{
+    char test_string[] = "Qd7xa4";
+    TEST_ASSERT_EQUAL_INT(PIECE_CAPTURE_BOTH, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_09(void)
+{
+    char test_string[] = "Qd7xa44";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_10(void)
+{
+    char test_string[] = "Pd7xa4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_11(void)
+{
+    char test_string[] = "d7xa4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_12(void)
+{
+    char test_string[] = "Qd7-a4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_13(void)
+{
+    char test_string[] = "Q7dxa4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_piece_invalid_14(void)
+{
+    char test_string[] = "Q7da4";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_castle_left_01(void)
+{
+    char test_string[] = "O-O-O";
+    TEST_ASSERT_EQUAL_INT(CASTLE_LEFT, get_san_type(test_string));
+}
+
+void test_get_san_type_castle_right_01(void)
+{
+    char test_string[] = "O-O";
+    TEST_ASSERT_EQUAL_INT(CASTLE_RIGHT, get_san_type(test_string));
+}
+
+void test_get_san_type_castle_invalid_01(void)
+{
+    char test_string[] = "o-O-O";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_invalid_01(void)
+{
+    char test_string[] = "";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+void test_get_san_type_invalid_02(void)
+{
+    char test_string[] = "Qd7a4 ";
+    TEST_ASSERT_EQUAL_INT(INVALID_SAN, get_san_type(test_string));
+}
+
+#endif
+
 int main(void)
 {
     UNITY_BEGIN();
 
-    // core_functions.h
     #ifdef TEST_CORE_FUNCTIONS_H
     RUN_TEST(test_board);
     RUN_TEST(test_is_attacked_by_rook);
@@ -2208,9 +2447,8 @@ int main(void)
     RUN_TEST(test_board_repeated_02);
     RUN_TEST(test_board_repeated_03);
     RUN_TEST(test_board_repeated_04);
-    #endif
+    #endif // TEST_CORE_FUNCTIONS_H
 
-    // core_interface.h
     #ifdef TEST_CORE_INTERFACE_H
     RUN_TEST(test_move_piece_01);
     RUN_TEST(test_move_piece_02);
@@ -2229,7 +2467,7 @@ int main(void)
     RUN_TEST(test_pawn_upgradable_01);
     RUN_TEST(test_pawn_upgradable_02);
     RUN_TEST(test_upgrade_pawn_01);
-    #endif
+    #endif // TEST_CORE_INTERFACE_H
 
     #ifdef TEST_DS_LIB_H
     RUN_TEST(test_stack_int_is_empty_01);
@@ -2239,7 +2477,7 @@ int main(void)
     RUN_TEST(test_stack_int_peek_02);
     RUN_TEST(test_stack_int_pop_01);
     RUN_TEST(test_stack_int_pop_02);
-    #endif
+    #endif // TEST_DS_LIB_H
 
     #ifdef TEST_TUI_LIB_H
     // tests here got accidentally deleted
@@ -2255,13 +2493,55 @@ int main(void)
     RUN_TEST(test_window_print_01_lb_normal_and_lb_truncate_01);
     RUN_TEST(test_window_print_02_lb_normal_and_lb_truncate_02);
     RUN_TEST(test_screen_print_multiple_windows_01);
-    #endif
+    #endif // TEST_TUI_LIB_H
 
     #ifdef TEST_GRAPHIC_OUTPUT_H
     RUN_TEST(test_write_current_board_01);
     RUN_TEST(test_write_current_board_02);
     RUN_TEST(test_board_window_01);
-    #endif
+    #endif // TEST_GRAPHIC_OUTPUT_H
+
+    #ifdef TEST_INPUT_H
+    RUN_TEST(test_read_input);
+    #endif // TEST_INPUT_H
+
+    #ifdef TEST_SAN_PARSING_H
+    RUN_TEST(test_remove_whitespace_01);
+    RUN_TEST(test_remove_whitespace_02);
+    RUN_TEST(test_remove_whitespace_03);
+    RUN_TEST(test_remove_whitespace_04);
+    RUN_TEST(test_remove_whitespace_05);
+    RUN_TEST(test_remove_whitespace_06);
+    RUN_TEST(test_remove_whitespace_07);
+    RUN_TEST(test_get_san_type_pawn_01);
+    RUN_TEST(test_get_san_type_pawn_02);
+    RUN_TEST(test_get_san_type_pawn_03);
+    RUN_TEST(test_get_san_type_pawn_04);
+    RUN_TEST(test_get_san_type_pawn_invalid_05);
+    RUN_TEST(test_get_san_type_pawn_invalid_06);
+    RUN_TEST(test_get_san_type_pawn_invalid_07);
+    RUN_TEST(test_get_san_type_pawn_invalid_08);
+    RUN_TEST(test_get_san_type_pawn_invalid_09);
+    RUN_TEST(test_get_san_type_piece_01);
+    RUN_TEST(test_get_san_type_piece_02);
+    RUN_TEST(test_get_san_type_piece_03);
+    RUN_TEST(test_get_san_type_piece_04);
+    RUN_TEST(test_get_san_type_piece_05);
+    RUN_TEST(test_get_san_type_piece_06);
+    RUN_TEST(test_get_san_type_piece_07);
+    RUN_TEST(test_get_san_type_piece_08);
+    RUN_TEST(test_get_san_type_piece_invalid_09);
+    RUN_TEST(test_get_san_type_piece_invalid_10);
+    RUN_TEST(test_get_san_type_piece_invalid_11);
+    RUN_TEST(test_get_san_type_piece_invalid_12);
+    RUN_TEST(test_get_san_type_piece_invalid_13);
+    RUN_TEST(test_get_san_type_piece_invalid_14);
+    RUN_TEST(test_get_san_type_castle_left_01);
+    RUN_TEST(test_get_san_type_castle_right_01);
+    RUN_TEST(test_get_san_type_castle_invalid_01);
+    RUN_TEST(test_get_san_type_invalid_01);
+    RUN_TEST(test_get_san_type_invalid_02);
+    #endif // TEST_SAN_PARSING_H
 
     return UNITY_END();
 }

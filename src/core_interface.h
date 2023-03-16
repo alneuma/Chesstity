@@ -19,6 +19,7 @@
 #ifndef CORE_INTERFACE_H
 #define CORE_INTERFACE_H
 
+#include "core_functions.h"
 #include <stdbool.h>
 
 typedef struct game *Game;
