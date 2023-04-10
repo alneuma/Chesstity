@@ -11,9 +11,9 @@ PRIVATE san_type san_type_piece(const char *input);
 PRIVATE san_type san_type_castle(const char *input);
 
 /////////////////////////////////////////////////////////////////////
-// remove_whitespace(): 
+// trim_whitespace(): 
 /////////////////////////////////////////////////////////////////////
-void remove_whitespace(char *string)
+void trim_whitespace(char *string)
 {
     // skip initial whitespace
     char *p = string;
@@ -29,34 +29,42 @@ void remove_whitespace(char *string)
     // mark first non-space and first trailing space
     char *first_non_space = p;
     char *first_trailing_space;
-    bool first_trailing_space_set = false;
     for (;;)
     {
         // walk through sequence of non-spaces
         while (('\0' != *p) && !isspace(*p))
             p++;
+        first_trailing_space = p;
         if ('\0' == *p)
             break;
-        first_trailing_space = p;
-        first_trailing_space_set = true;
+
         // walk through sequence of spaces
         while (('\0' != *p) && isspace(*p))
             p++;
         if ('\0' == *p)
+        {
+            if (!isspace(*(p-1)))
+                first_trailing_space = p;
             break;
+        }
     }
-    // replace string with the part between first_non_space and first_trailing_space
-    p = string;
-    while (('\0' != *first_non_space) && (first_trailing_space_set ? (first_non_space < first_trailing_space) : true))
-        *p++ = *first_non_space++;
-    *p = '\0';
+
+    if (string == first_non_space)
+    {
+        *first_trailing_space = '\0';   
+    }
+    else
+    {
+        while (first_non_space < first_trailing_space)
+        {
+            *string++ = *first_non_space++;
+        }
+        *string = '\0';
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
-// is_valid_san(): 
-// BETTER IDEA: make int instead of bool and return codes depending
-// on the fromat of the san
-// (pawn-move/capturing/row-specification/column-specification/etc.)
+// get_san_type(): 
 /////////////////////////////////////////////////////////////////////
 san_type get_san_type(const char *input)
 {

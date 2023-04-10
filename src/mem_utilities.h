@@ -12,7 +12,7 @@
 { \
     if (NULL == (ptr)) \
     { \
-        printf("error: %s: memory-allocation failed; aborting\n", __func__); \
+        fprintf(stderr, "error: %s: memory-allocation failed; aborting\n", __func__); \
         exit(EXIT_FAILURE); \
     } \
 }

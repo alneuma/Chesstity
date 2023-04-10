@@ -8,6 +8,7 @@
 
 #include "core_functions.h"
 #include "core_interface.h"
+#include "san_parsing.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -62,49 +63,9 @@ PRIVATE Letter_piece piece_to_letter_interf(const Piece_i *piece);
  *              !!!! draw claim/proposal and pawn creation not included
  *              (also not in input)
  ********************************************************************/
-/*
 Move san_to_move(const char *san, const Game game)
 {
-    Square_i destination;
-    int i;
-    Move move;
-    if (!isupper(*san))
-    {
-        if ('x' == san[1])
-        {
-            move = { {san[3] - '0' + ((WHITE_i == player_active(game->current_state)) ? -1 : 1), *san - 'a'}, {san[3] - '0', san[2] - 'a'} };
-            if (game->current_state->possible_moves[move.from.row][move.from.column][move.to.row][move.to.column])
-                return move;
-            else
-                return {{-1,-1},{-1,-1}};
-        }
-
-        move = { {san[1] - '0' + ((WHITE_i == player_active(game->current_state)) ? -1 : 1), *san - 'a'}, {san[1] - '0', *san - 'a'} };
-
-        if (game->current_state->possible_moves[move.from.row][move.from.column][move.to.row][move.to.column])
-            return move;
-        else if ((3 == move.to.row) && (WHITE_i == player_active(game->current_state)))
-        {
-            move.from.row--;
-            if (game->current_state->possible_moves[move.from.row][move.from.column][move.to.row][move.to.column])
-                return move;
-        }
-        else if ((4 == move.to.row) && (BLACK_i == player_active(game->current_state)))
-        {
-            move.from.row++;
-            if (game->current_state->possible_moves[move.from.row][move.from.column][move.to.row][move.to.column])
-                return move;
-        }
-        else
-            return {{-1,-1},{-1,-1}};
-    }
-    else
-    {
-        // write PRIVATE function that converts san letters to pieces
-        // no pawn
-    }
 }
-*/
 
 /********************************************************************
  * create_game: Creates a Game object, which is a linked list, with *

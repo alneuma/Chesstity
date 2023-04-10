@@ -2157,52 +2157,59 @@ void test_read_input(void)
 #endif
 
 #ifdef TEST_SAN_PARSING_H
-void test_remove_whitespace_01(void)
+void test_trim_whitespace_01(void)
 {
     char test_string[] = "test";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("test",test_string);
 }
 
-void test_remove_whitespace_02(void)
+void test_trim_whitespace_02(void)
 {
     char test_string[] = "";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("",test_string);
 }
 
-void test_remove_whitespace_03(void)
+void test_trim_whitespace_03(void)
 {
     char test_string[] = "   ";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("",test_string);
 }
 
-void test_remove_whitespace_04(void)
+void test_trim_whitespace_04(void)
 {
     char test_string[] = "   test";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("test",test_string);
 }
 
-void test_remove_whitespace_05(void)
+void test_trim_whitespace_05(void)
 {
     char test_string[] = "test  ";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("test",test_string);
 }
 
-void test_remove_whitespace_06(void)
+void test_trim_whitespace_06(void)
 {
     char test_string[] = " test ";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("test",test_string);
 }
 
-void test_remove_whitespace_07(void)
+void test_trim_whitespace_07(void)
 {
     char test_string[] = " test test toast ";
-    remove_whitespace(test_string);
+    trim_whitespace(test_string);
+    TEST_ASSERT_EQUAL_STRING("test test toast",test_string);
+}
+
+void test_trim_whitespace_08(void)
+{
+    char test_string[] = " test test toast";
+    trim_whitespace(test_string);
     TEST_ASSERT_EQUAL_STRING("test test toast",test_string);
 }
 
@@ -2506,13 +2513,15 @@ int main(void)
     #endif // TEST_INPUT_H
 
     #ifdef TEST_SAN_PARSING_H
-    RUN_TEST(test_remove_whitespace_01);
-    RUN_TEST(test_remove_whitespace_02);
-    RUN_TEST(test_remove_whitespace_03);
-    RUN_TEST(test_remove_whitespace_04);
-    RUN_TEST(test_remove_whitespace_05);
-    RUN_TEST(test_remove_whitespace_06);
-    RUN_TEST(test_remove_whitespace_07);
+    RUN_TEST(test_trim_whitespace_01);
+    RUN_TEST(test_trim_whitespace_02);
+    RUN_TEST(test_trim_whitespace_03);
+    RUN_TEST(test_trim_whitespace_04);
+    RUN_TEST(test_trim_whitespace_05);
+    RUN_TEST(test_trim_whitespace_06);
+    RUN_TEST(test_trim_whitespace_07);
+    RUN_TEST(test_trim_whitespace_07);
+    RUN_TEST(test_trim_whitespace_08);
     RUN_TEST(test_get_san_type_pawn_01);
     RUN_TEST(test_get_san_type_pawn_02);
     RUN_TEST(test_get_san_type_pawn_03);
