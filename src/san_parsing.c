@@ -34,28 +34,28 @@ void trim_whitespace(char *string)
         // walk through sequence of non-spaces
         while (('\0' != *p) && !isspace(*p))
             p++;
-        first_trailing_space = p;
         if ('\0' == *p)
             break;
 
+        first_trailing_space = p;
         // walk through sequence of spaces
         while (('\0' != *p) && isspace(*p))
             p++;
         if ('\0' == *p)
         {
-            if (!isspace(*(p-1)))
-                first_trailing_space = p;
+            if (isspace(*(p-1)))
+                p = first_trailing_space;
             break;
         }
     }
 
     if (string == first_non_space)
     {
-        *first_trailing_space = '\0';   
+        *p = '\0';   
     }
     else
     {
-        while (first_non_space < first_trailing_space)
+        while (first_non_space < p)
         {
             *string++ = *first_non_space++;
         }
