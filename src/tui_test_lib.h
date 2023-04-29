@@ -1,3 +1,6 @@
+// Copyright: (c) 2023, Alrik Neumann
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 /********************************************************************
  * tui_test_lib.h
  * Gives access to functions, which facilitate testing of tui_lib.c

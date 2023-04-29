@@ -1,3 +1,6 @@
+// Copyright: (c) 2023, Alrik Neumann
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 // IMPORTANT:
 // For tests to work #define DEBUG in the following files:
 // core_functions.c
@@ -7,12 +10,12 @@
 ///////////////////////////////////////////////
 // options: uncomment to test specified modules
 ///////////////////////////////////////////////
-// #define TEST_CORE_FUNCTIONS_H
-// #define TEST_CORE_INTERFACE_H
-// #define TEST_DS_LIB_H
-// #define TEST_TUI_LIB_H
-// #define TEST_GRAPHIC_OUTPUT_H
-// #define TEST_INPUT_H
+#define TEST_CORE_FUNCTIONS_H
+#define TEST_CORE_INTERFACE_H
+#define TEST_DS_LIB_H
+#define TEST_TUI_LIB_H
+#define TEST_GRAPHIC_OUTPUT_H
+#define TEST_INPUT_H
 #define TEST_SAN_PARSING_H
 
 /* include directives */
@@ -2148,6 +2151,7 @@ void test_board_window_01(void)
 #ifdef TEST_INPUT_H
 void test_read_input(void)
 {
+    puts("Enter input to continue testing:");
     char *line = read_input();
     puts(line);
 
@@ -2388,6 +2392,7 @@ int main(void)
     UNITY_BEGIN();
 
     #ifdef TEST_CORE_FUNCTIONS_H
+    printf("\nNOW TESTING: core_functions.h\nImplements core functionality.\n");
     RUN_TEST(test_board);
     RUN_TEST(test_is_attacked_by_rook);
     RUN_TEST(test_is_attacked_by_bishop);
@@ -2457,6 +2462,7 @@ int main(void)
     #endif // TEST_CORE_FUNCTIONS_H
 
     #ifdef TEST_CORE_INTERFACE_H
+    printf("\nNOW TESTING: core_interface.h\nImplements programming interface for the core functionality.\n");
     RUN_TEST(test_move_piece_01);
     RUN_TEST(test_move_piece_02);
     RUN_TEST(test_move_piece_03);
@@ -2477,6 +2483,7 @@ int main(void)
     #endif // TEST_CORE_INTERFACE_H
 
     #ifdef TEST_DS_LIB_H
+    printf("\nNOW TESTING: ds_lib.h\nImplements basic data-structures.\n");
     RUN_TEST(test_stack_int_is_empty_01);
     RUN_TEST(test_stack_int_is_empty_02);
     RUN_TEST(test_stack_int_is_empty_03);
@@ -2487,6 +2494,7 @@ int main(void)
     #endif // TEST_DS_LIB_H
 
     #ifdef TEST_TUI_LIB_H
+    printf("\nNOW TESTING: graphic_output.h\nImplements a library for displaying very simple TUIs.\n");
     // tests here got accidentally deleted
     RUN_TEST(test_window_create_01);
     RUN_TEST(test_screen_create_01);
@@ -2503,16 +2511,19 @@ int main(void)
     #endif // TEST_TUI_LIB_H
 
     #ifdef TEST_GRAPHIC_OUTPUT_H
+    printf("\nNOW TESTING: graphic_output.h\nImplements functionality for displaying the game screen.\n");
     RUN_TEST(test_write_current_board_01);
     RUN_TEST(test_write_current_board_02);
     RUN_TEST(test_board_window_01);
     #endif // TEST_GRAPHIC_OUTPUT_H
 
     #ifdef TEST_INPUT_H
+    printf("\nNOW TESTING: input.h\nImplements functionality reading input.\n");
     RUN_TEST(test_read_input);
     #endif // TEST_INPUT_H
 
     #ifdef TEST_SAN_PARSING_H
+    printf("\nNOW TESTING: san_parsing.h\nImplements functionality for parsing standard algebraic notation.\n");
     RUN_TEST(test_trim_whitespace_01);
     RUN_TEST(test_trim_whitespace_02);
     RUN_TEST(test_trim_whitespace_03);

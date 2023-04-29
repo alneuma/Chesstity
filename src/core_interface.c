@@ -1,3 +1,6 @@
+// Copyright: (c) 2023, Alrik Neumann
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 // settings to enable debugging
 #define DEBUG
 #ifndef DEBUG
@@ -261,9 +264,9 @@ const Letter_piece *current_board(Game game)
                                           NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
                                           NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
                                           NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, 
-                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY};
+                                          NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, NONE_EMPTY, '\0'};
 
-    for (Letter_piece *p = board_string; *p; p++)
+    for (Letter_piece *p = board_string; p < board_string + BOARD_ROWS * BOARD_COLUMNS; p++)
         *p = NONE_EMPTY;
 
     Letter_piece *write = board_string;
