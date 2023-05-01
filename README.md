@@ -3,7 +3,7 @@ Copyright: (c) 2023, Alrik Neumann
 GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 -->
 
-# ChesstitY
+# Chesstity
 
 This is a not yet functional command-line chess-game written in C.
 
@@ -32,10 +32,19 @@ While screens and windows can be created and destroyed independently. Screens wi
 For each screen and window many different parameters can be altered, like padding, background, size, positioning etc.
 When a window get's deleted, it will also be removed from all screens holding it. When a screen gets deleted, the windows, which were inside of it continue to exists and can be added to other screens. Each window can be part of multiple screens at the same time.
 
+![](./screenshots/tui_lib_testrun01.png)
+testing `tui_lib.c`
+
+![](./screenshots/tui_lib_testrun02.png)
+prototype of the main game-window
+
 #### Input
 
-The Program accepts input in standard algebraic notation. The current challenge is to finish writing the functionality for input parsing.
+The Program accepts input in [standard algebraic notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)). The current challenge is to finish writing the functionality for input parsing.
 
 ### Testing
 
-Using the [Unity](http://www.throwtheswitch.org/unity) testing-framework, I followed a rigorous testing routine while developing this. Knowing that the large majority of the so far written code works as intended makes me confident that I will eventually finish this project. All the tests are written inside of `test_chess.c` and can be run by using the `make test` command.
+Using the [Unity](http://www.throwtheswitch.org/unity) testing-framework, I followed a rigorous testing routine while developing this. Knowing that the large majority of the so far written code works as intended makes me confident that I will eventually finish this project. All the tests are written inside of `test_chess.c` and can be run by using the `make test` command inside of `chesstity/src`.
+
+![](./screenshots/testing01.png)
+a part of the output of `make test`

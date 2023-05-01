@@ -2087,8 +2087,8 @@ void test_screen_print_multiple_windows_01(void)
     screen_add_window(s, w1, 0);
     screen_add_window(s, w2, 0);
     screen_add_window(s, w3, 0);
-    screen_window_set_position(s, w1, 5, 5);
-    screen_window_set_position(s, w2, 3, 70);
+    screen_window_set_position(s, w1, 5, 25);
+    screen_window_set_position(s, w2, 3, 60);
     screen_window_set_position(s, w3, 26, 94);
 
     screen_print(s);
